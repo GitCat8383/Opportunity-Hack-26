@@ -8,7 +8,7 @@ router = APIRouter(prefix="/ai", tags=["ai"])
 async def embed_entry(
     current_user: dict = Depends(require_role(["staff", "admin"])),
 ):
-    """Embed a service entry for semantic search. (Step 4)"""
+    """Embed a service entry for semantic search. Model: Gemini text-embedding-004 (Step 4)"""
     raise HTTPException(status_code=501, detail="Not yet implemented")
 
 
@@ -16,7 +16,7 @@ async def embed_entry(
 async def semantic_search(
     current_user: dict = Depends(require_role(["staff", "admin"])),
 ):
-    """Semantic search across case notes. (Step 4)"""
+    """Semantic search across case notes via pgvector. (Step 4)"""
     raise HTTPException(status_code=501, detail="Not yet implemented")
 
 
@@ -24,7 +24,7 @@ async def semantic_search(
 async def photo_intake(
     current_user: dict = Depends(require_role(["staff", "admin"])),
 ):
-    """Extract form fields from a photo. (Step 7)"""
+    """Extract form fields from a photo. Model: Gemini 2.5 Pro (Step 7)"""
     raise HTTPException(status_code=501, detail="Not yet implemented")
 
 
@@ -32,7 +32,7 @@ async def photo_intake(
 async def transcribe_audio(
     current_user: dict = Depends(require_role(["staff", "admin"])),
 ):
-    """Transcribe audio via Whisper. (Step 7)"""
+    """Transcribe audio via Gemini 2.0 Flash (native audio input). (Step 7)"""
     raise HTTPException(status_code=501, detail="Not yet implemented")
 
 
@@ -40,7 +40,7 @@ async def transcribe_audio(
 async def structure_note(
     current_user: dict = Depends(require_role(["staff", "admin"])),
 ):
-    """Structure a transcript into a case note. (Step 7)"""
+    """Structure a transcript into a case note. Model: Gemini 2.0 Flash (Step 7)"""
     raise HTTPException(status_code=501, detail="Not yet implemented")
 
 
@@ -48,7 +48,7 @@ async def structure_note(
 async def summarize_client(
     current_user: dict = Depends(require_role(["staff", "admin"])),
 ):
-    """Generate client handoff summary. (Step 8)"""
+    """Generate client handoff summary. Model: Gemini 2.5 Pro (Step 8)"""
     raise HTTPException(status_code=501, detail="Not yet implemented")
 
 
@@ -56,7 +56,7 @@ async def summarize_client(
 async def extract_followups(
     current_user: dict = Depends(require_role(["staff", "admin"])),
 ):
-    """Extract follow-ups from a case note. (Step 8)"""
+    """Extract follow-ups from a case note. Model: Gemini 2.0 Flash (Step 8)"""
     raise HTTPException(status_code=501, detail="Not yet implemented")
 
 
@@ -64,7 +64,7 @@ async def extract_followups(
 async def funder_report(
     current_user: dict = Depends(require_role(["admin"])),
 ):
-    """Generate a funder report. (Step 9)"""
+    """Generate a funder report. Model: Gemini 2.5 Pro (Step 9)"""
     raise HTTPException(status_code=501, detail="Not yet implemented")
 
 
@@ -72,5 +72,5 @@ async def funder_report(
 async def translate_text(
     current_user: dict = Depends(require_role(["staff", "admin"])),
 ):
-    """Translate text with caching. (Step 10)"""
+    """Translate text with caching. Model: Gemini 2.0 Flash (Step 10)"""
     raise HTTPException(status_code=501, detail="Not yet implemented")

@@ -6,14 +6,14 @@ Techstack:
 Frontend: Next.js 14+ (React 18, TypeScript), shadcn/ui + Tailwind CSS
 Backend: Python 3.11, FastAPI + SQLAlchemy + Alembic
 Database: Supabase (PostgreSQL 15 + pgvector)
-API: OpenAI Whisper, OpenAI text-embedding-3-small, Anthropic Claude Sonnet, GPT-4o-mini
+AI: Google Gemini 2.5 Pro (vision, summaries, reports), Gemini 2.0 Flash (transcription, structuring, follow-ups, translation), Gemini text-embedding-004 (semantic search)
 Auth & Security: Supabase Auth (Google SSO + email, JWT)
 Hosting: Vercel (frontend), Railway/Render (backend)
 
 Dashboard — the first thing staff sees when they log in. Stat cards at the top (active clients, services this week, open follow-ups, AI spend). Below that: a live "Pending Follow-Ups" list sorted by urgency (AI-detected from case notes), and a bar chart of services by type for the month.
 Clients — a searchable, sortable table of all clients with their ID, language, last service date, and status. Buttons for CSV import/export and adding new clients. Clicking any row opens their profile.
 Profile — the core screen of the app. Left side has the client's demographics and custom fields. Right side has the AI-generated handoff summary with a Regenerate button. Below is the full chronological service history. A "+ Log service" button is always visible here.
-Log service — the service entry form. Has a "Scan intake form" button (photo-to-intake AI) at the top right, a voice record button that triggers Whisper + Claude structuring, and after saving — the green AI nudge box showing any follow-ups the AI detected in the note.
+Log service — the service entry form. Has a "Scan intake form" button (photo-to-intake AI) at the top right, a voice record button that triggers Gemini audio transcription + structuring, and after saving — the green AI nudge box showing any follow-ups the AI detected in the note.
 The whole app is intentionally simple — it needs to be usable by a food bank volunteer with no tech background. Every AI feature is invisible until you need it, never in the way.
 
 Auth + Role-Based Access:
@@ -23,7 +23,7 @@ To do step:
 Step 1: ✅ COMPLETED
 [x] Create Supabase project, save URL + anon key — MANUAL (user)
 [x] Create Vercel account, link GitHub — MANUAL (user)
-[x] Fund OpenAI API key (~$5) and Anthropic API key (~$5) — MANUAL (user)
+[x] Fund Google Gemini API key (Google AI Studio) — MANUAL (user)
 [x] Pre-write DB schema SQL → database/schema.sql
 [x] Pre-write seed script (15 clients, 50 service entries) → database/seed.py
 [x] Scaffold FastAPI project locally → backend/
@@ -36,7 +36,7 @@ Step 2:
 [ ] Configure RLS policies on clients, service_entries, follow_ups, audit_log
 [ ] Deploy FastAPI skeleton to Railway/Render, confirm it's live
 [ ] Deploy Vite frontend to Vercel, confirm it's live
-[ ] Set all env vars on both deployments (SUPABASE_URL, SUPABASE_ANON_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY)
+[ ] Set all env vars on both deployments (SUPABASE_URL, SUPABASE_ANON_KEY, GEMINI_API_KEY)
 [ ] Run seed script, confirm data appears in Supabase dashboard
 [ ] Create POST /ai/{action} skeleton route with auth check
 [ ] Create prompts table with version history (prompt registry for AI system prompts)
@@ -49,7 +49,7 @@ Step 3:
 [ ] Service entry form (date, service type dropdown, staff, notes)
 [ ] Role-based route guards (middleware checking Supabase session + role)
 Step 4:
-[ ] POST /ai/embed — takes service_entry_id, calls OpenAI text-embedding-3-small, stores in embeddings table
+[ ] POST /ai/embed — takes service_entry_id, calls Gemini text-embedding-004, stores in embeddings table
 [ ] Backfill script — embed all 50 seed service entries now (so pgvector index is warm)
 [ ] match_documents Supabase RPC function (cosine similarity, threshold 0.75, limit 10)
 [ ] POST /ai/search — embed query, run RPC, return matched entries with client + snippet
@@ -70,33 +70,33 @@ Step 6: Scheduling, Calendar & Document Uploads
 [ ] Display attached documents on client profile page
 Step 7: AI — Photo Intake & Voice Notes
 [ ] Camera/upload button on client registration form
-[ ] POST /ai/photo-intake — base64 image → Claude Vision → JSON → pre-fill form fields
+[ ] POST /ai/photo-intake — base64 image → Gemini 2.5 Pro → JSON → pre-fill form fields
 [ ] Prepare 3 demo images (handwritten form, printed form, napkin)
 [ ] Record button on service entry form (browser MediaRecorder API → .webm blob)
-[ ] POST /ai/transcribe — audio blob → OpenAI Whisper → transcript
-[ ] POST /ai/structure-note — transcript + service types → Claude → structured JSON (summary, service type, action items, follow-up date, risk flag)
+[ ] POST /ai/transcribe — audio blob → Gemini 2.0 Flash (native audio) → transcript
+[ ] POST /ai/structure-note — transcript + service types → Gemini 2.0 Flash → structured JSON (summary, service type, action items, follow-up date, risk flag)
 [ ] Pre-fill service entry form fields from structured JSON response
 [ ] Add loading toast: "Recording → Transcribing → Structuring"
 Step 8: Audit Log, Summaries & Follow-Ups
 [ ] Supabase trigger on INSERT/UPDATE/DELETE for clients and service_entries → writes to audit_log (no PII values, just metadata)
 [ ] Admin audit log view page
-[ ] POST /ai/summarize-client — fetch all service entries for client, send to Claude, return structured handoff summary
+[ ] POST /ai/summarize-client — fetch all service entries for client, send to Gemini 2.5 Pro, return structured handoff summary
 [ ] "Generate Summary" button on client profile with "Regenerate" + copy-to-clipboard
 [ ] Ensure all AI outputs are shown as editable drafts — never auto-saved without human confirmation (human-in-the-loop)
-[ ] POST /ai/extract-followups — async call on every service entry save → GPT-4o-mini → writes to follow_ups table
+[ ] POST /ai/extract-followups — async call on every service entry save → Gemini 2.0 Flash → writes to follow_ups table
 [ ] Dashboard "Pending Follow-Ups" widget sorted by urgency (Supabase Realtime subscription)
 Step 9: Full Integration & Funder Reports
 [ ] Wire all AI features into actual UI (semantic search bar, voice button, photo button, summary button, follow-ups widget)
 [ ] Add loading spinners/toasts to all AI calls
 [ ] End-to-end test of full user journey
 [ ] Admin dashboard "Generate Report" button with quarter date range picker
-[ ] POST /ai/funder-report — SQL aggregation → Claude (long context, streaming) → narrative report
+[ ] POST /ai/funder-report — SQL aggregation → Gemini 2.5 Pro (long context, streaming) → narrative report
 [ ] Stream response to frontend via SSE (report appears word by word)
 [ ] Export report to .docx using python-docx
 [ ] Prepare "before vs after" demo: raw CSV dump vs polished report side by side
 Step 10:
 [ ] Language toggle (EN/ES) on registration and service entry forms
-[ ] POST /ai/translate — check translations cache table first, call Claude on miss, store result
+[ ] POST /ai/translate — check translations cache table first, call Gemini 2.0 Flash on miss, store result
 [ ] Batch-translate all form labels + placeholder text on language switch
 [ ] "Translate Note" toggle on case notes (inline translation, lighter font color)
 [ ] Reporting dashboard page — 4 charts using Recharts: active clients (stat), services this week/month/quarter (bar), service type breakdown (pie), visit trend (line)

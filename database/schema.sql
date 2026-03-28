@@ -174,7 +174,7 @@ CREATE TABLE embeddings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     service_entry_id UUID NOT NULL UNIQUE REFERENCES service_entries(id) ON DELETE CASCADE,
-    embedding vector(1536),            -- text-embedding-3-small dimension
+    embedding vector(768),            -- Gemini text-embedding-004 dimension
     content_snippet TEXT,              -- first ~500 chars for display
     created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -231,7 +231,7 @@ CREATE TABLE ai_usage_log (
     org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE RESTRICT,
     feature TEXT NOT NULL,             -- 'transcribe', 'structure_note', 'photo_intake', 'embed', 'search', 'summarize', 'follow_ups', 'funder_report', 'translate'
-    model TEXT NOT NULL,               -- 'whisper-1', 'text-embedding-3-small', 'claude-sonnet', 'gpt-4o-mini'
+    model TEXT NOT NULL,               -- 'gemini-2.5-pro', 'gemini-2.0-flash', 'text-embedding-004'
     input_tokens INTEGER DEFAULT 0,
     output_tokens INTEGER DEFAULT 0,
     cost_cents NUMERIC(10,4) DEFAULT 0,
@@ -279,7 +279,7 @@ CREATE INDEX idx_client_summaries ON client_summaries(client_id, created_at DESC
 -- 15. RPC: Semantic search via cosine similarity
 -- ============================================================
 CREATE OR REPLACE FUNCTION match_documents(
-    query_embedding vector(1536),
+    query_embedding vector(768),
     match_org_id UUID,
     match_threshold FLOAT DEFAULT 0.75,
     match_count INT DEFAULT 10

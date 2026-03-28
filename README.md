@@ -10,7 +10,7 @@ A lightweight, AI-powered client and case management web application built for s
 | Backend | Python 3.11, FastAPI, SQLAlchemy, Alembic |
 | Database | Supabase (PostgreSQL 15 + pgvector) |
 | Auth | Supabase Auth (Google SSO + email/password) |
-| AI | OpenAI Whisper, text-embedding-3-small, Anthropic Claude Sonnet, GPT-4o-mini |
+| AI | Google Gemini 2.5 Pro, Gemini 2.0 Flash, Gemini text-embedding-004 |
 | Hosting | Vercel (frontend), Railway/Render (backend) |
 
 ## Features
@@ -23,8 +23,8 @@ A lightweight, AI-powered client and case management web application built for s
 - Multi-tenant data isolation via Supabase RLS
 
 **AI-Powered (P2)**
-- Voice-to-structured case notes (Whisper + Claude)
-- Photo-to-intake form digitization (Claude Vision)
+- Voice-to-structured case notes (Gemini 2.0 Flash native audio)
+- Photo-to-intake form digitization (Gemini 2.5 Pro vision)
 - Semantic search across all case notes (pgvector)
 - AI-generated client handoff summaries
 - Smart follow-up detection from case notes
@@ -65,8 +65,7 @@ A lightweight, AI-powered client and case management web application built for s
 - Node.js 18+
 - Python 3.11+
 - A Supabase project ([supabase.com](https://supabase.com))
-- OpenAI API key
-- Anthropic API key
+- Google Gemini API key ([aistudio.google.com](https://aistudio.google.com))
 
 ### 1. Database Setup
 
@@ -119,8 +118,7 @@ This inserts a fictional nonprofit "Sunrise Services" with 15 clients and 50 ser
 | `SUPABASE_ANON_KEY` | Supabase anon/public key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-side only) |
 | `DATABASE_URL` | Direct PostgreSQL connection string |
-| `OPENAI_API_KEY` | OpenAI API key |
-| `ANTHROPIC_API_KEY` | Anthropic API key |
+| `GEMINI_API_KEY` | Google Gemini API key |
 
 ### Frontend (`frontend/.env.local`)
 
