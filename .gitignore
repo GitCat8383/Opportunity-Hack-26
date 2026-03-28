@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+backend/venv/
+backend/.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment (secrets — never commit these)
+.env
+.env.local
+.env.production
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Next.js build
+.next/
+out/
+.vercel
+
+# Python build
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Testing
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Claude Code
+.claude/
+dev.db
