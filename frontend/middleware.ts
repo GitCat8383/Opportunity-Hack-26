@@ -18,6 +18,14 @@ function isProtectedPath(pathname: string) {
 }
 
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  if (!isProtectedPath(pathname) && !AUTH_ROUTES.has(pathname)) {
+    return NextResponse.next({
+      request,
+    });
+  }
+
   let response = NextResponse.next({
     request,
   });
@@ -45,10 +53,18 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const pathname = request.nextUrl.pathname;
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const {
+      data: { user: resolvedUser },
+    } = await supabase.auth.getUser();
+    user = resolvedUser;
+  } catch {
+    if (AUTH_ROUTES.has(pathname)) {
+      return response;
+    }
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
 
   if (AUTH_ROUTES.has(pathname) && user) {
     return NextResponse.redirect(new URL("/dashboard", request.url));

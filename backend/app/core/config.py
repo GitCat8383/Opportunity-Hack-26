@@ -39,7 +39,11 @@ class Settings(BaseSettings):
             return [item.strip() for item in trimmed.split(",") if item.strip()]
         return value
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "enable_decoding": False,
+    }
 
 
 @lru_cache()
