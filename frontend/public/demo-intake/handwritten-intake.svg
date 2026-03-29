@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+  <rect width="1200" height="900" fill="#f4e8d7"/>
+  <rect x="120" y="70" width="960" height="760" rx="18" fill="#fffef9" stroke="#6b4f3a" stroke-width="5"/>
+  <text x="150" y="132" font-family="'Courier New', monospace" font-size="30" fill="#6b4f3a">Community Pantry Intake Sheet</text>
+  <path d="M150 150 C260 138 380 172 520 154" stroke="#b45309" stroke-width="4" fill="none" opacity="0.45"/>
+
+  <g stroke="#d6c4a8" stroke-width="2">
+    <line x1="150" y1="210" x2="1040" y2="210"/>
+    <line x1="150" y1="300" x2="1040" y2="300"/>
+    <line x1="150" y1="390" x2="1040" y2="390"/>
+    <line x1="150" y1="480" x2="1040" y2="480"/>
+    <line x1="150" y1="570" x2="1040" y2="570"/>
+    <line x1="150" y1="660" x2="1040" y2="660"/>
+  </g>
+
+  <g font-family="Arial, sans-serif" font-size="20" fill="#4b5563">
+    <text x="160" y="195">Name</text>
+    <text x="160" y="285">DOB</text>
+    <text x="420" y="285">Phone</text>
+    <text x="160" y="375">Email</text>
+    <text x="160" y="465">Address</text>
+    <text x="160" y="555">Language</text>
+    <text x="450" y="555">Household</text>
+    <text x="160" y="645">Needs / follow-up</text>
+  </g>
+
+  <g font-family="'Bradley Hand', 'Comic Sans MS', cursive" font-size="34" fill="#1e3a8a">
+    <text x="160" y="248">James Carter</text>
+    <text x="160" y="338">11/03/1974</text>
+    <text x="430" y="338">555-402-7780</text>
+    <text x="160" y="428">jcarter74@mail.com</text>
+    <text x="160" y="518">42 Hillcrest Ave Apt B</text>
+    <text x="160" y="608">English</text>
+    <text x="470" y="608">1</text>
+    <text x="160" y="698">Lost work hours. needs food box + rent relief info.</text>
+    <text x="160" y="734">Call back Monday about utility shutoff notice.</text>
+  </g>
+
+  <path d="M920 710 C980 650 1040 760 1010 810" stroke="#7c2d12" stroke-width="6" fill="none" opacity="0.35"/>
+</svg>

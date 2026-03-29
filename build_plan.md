@@ -61,22 +61,22 @@ Step 5:
 [x] CSV export — clients table → download via pandas or manual CSV build
 [x] CSV import — upload CSV, parse, bulk insert with validation errors shown inline
 Step 6: Scheduling, Calendar & Document Uploads
-[ ] Create appointments table (client_id, staff_id, scheduled_date, type, status, notes)
-[ ] Appointment creation form (date/time picker, client selector, service type)
-[ ] Calendar view page showing upcoming appointments for today/this week (use a lightweight calendar component)
-[ ] In-app reminder system for upcoming appointments (Supabase Realtime or polling)
-[ ] Document upload button on client profile (intake forms, signed waivers, photos)
-[ ] POST /clients/{id}/documents — upload to Supabase Storage with org-level access controls
-[ ] Display attached documents on client profile page
+[x] Create appointments table (client_id, staff_id, scheduled_date, type, status, notes)
+[x] Appointment creation form (date/time picker, client selector, service type)
+[x] Calendar view page showing upcoming appointments for today/this week (use a lightweight calendar component)
+[x] In-app reminder system for upcoming appointments (Supabase Realtime or polling)
+[x] Document upload button on client profile (intake forms, signed waivers, photos)
+[x] POST /clients/{id}/documents — upload to Supabase Storage with org-level access controls
+[x] Display attached documents on client profile page
 Step 7: AI — Photo Intake & Voice Notes
-[ ] Camera/upload button on client registration form
-[ ] POST /ai/photo-intake — base64 image → Gemini 2.5 Pro → JSON → pre-fill form fields
-[ ] Prepare 3 demo images (handwritten form, printed form, napkin)
-[ ] Record button on service entry form (browser MediaRecorder API → .webm blob)
-[ ] POST /ai/transcribe — audio blob → Gemini 2.5 Flash (native audio) → transcript
-[ ] POST /ai/structure-note — transcript + service types → Gemini 2.5 Flash → structured JSON (summary, service type, action items, follow-up date, risk flag)
-[ ] Pre-fill service entry form fields from structured JSON response
-[ ] Add loading toast: "Recording → Transcribing → Structuring"
+[x] Camera/upload button on client registration form
+[x] POST /ai/photo-intake — base64 image → Gemini 2.5 Pro → JSON → pre-fill form fields
+[x] Prepare 3 demo images (handwritten form, printed form, napkin)
+[x] Record button on service entry form (browser MediaRecorder API → .webm blob)
+[x] POST /ai/transcribe — audio blob → Gemini 2.5 Flash (native audio) → transcript
+[x] POST /ai/structure-note — transcript + service types → Gemini 2.5 Flash → structured JSON (summary, service type, action items, follow-up date, risk flag)
+[x] Pre-fill service entry form fields from structured JSON response
+[x] Add loading toast: "Recording → Transcribing → Structuring"
 Step 8: Audit Log, Summaries & Follow-Ups
 [ ] Supabase trigger on INSERT/UPDATE/DELETE for clients and service_entries → writes to audit_log (no PII values, just metadata)
 [ ] Admin audit log view page

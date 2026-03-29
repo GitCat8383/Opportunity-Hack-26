@@ -1,7 +1,30 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+import base64
+import binascii
 
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.database import get_db
 from app.middleware.auth import require_role
-from app.schemas.ai import EmbedRequest, EmbedResponse, SearchRequest, SearchResponse
+from app.models.org_config import OrgConfig
+from app.schemas.ai import (
+    EmbedRequest,
+    EmbedResponse,
+    PhotoIntakeRequest,
+    PhotoIntakeResponse,
+    SearchRequest,
+    SearchResponse,
+    StructureNoteRequest,
+    StructureNoteResponse,
+    TranscriptionResponse,
+)
+from app.schemas.org_config import CustomFieldDefinition
+from app.services.gemini_ai import (
+    extract_photo_intake,
+    structure_transcript_note,
+    transcribe_audio_bytes,
+)
 from app.services.semantic_search import embed_service_entry, semantic_search_entries
 
 router = APIRouter(prefix="/ai", tags=["ai"])
@@ -77,28 +100,84 @@ async def semantic_search(
     )
 
 
-@router.post("/photo-intake")
+@router.post("/photo-intake", response_model=PhotoIntakeResponse)
 async def photo_intake(
+    data: PhotoIntakeRequest,
+    db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_role(["staff", "admin"])),
 ):
     """Extract form fields from a photo. Model: Gemini 2.5 Pro (Step 7)"""
-    raise HTTPException(status_code=501, detail="Not yet implemented")
+    org_id = current_user.get("user_metadata", {}).get("org_id")
+    if not data.mime_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Unsupported image type")
+
+    try:
+        image_bytes = base64.b64decode(data.image_base64, validate=True)
+    except (binascii.Error, ValueError) as exc:
+        raise HTTPException(status_code=400, detail="Invalid base64 image payload") from exc
+
+    config_result = await db.execute(select(OrgConfig).where(OrgConfig.org_id == org_id))
+    org_config = config_result.scalar_one_or_none()
+    extra_fields_schema = [
+        CustomFieldDefinition.model_validate(field)
+        for field in (org_config.extra_fields_schema if org_config else [])
+    ]
+
+    try:
+        return await extract_photo_intake(
+            image_bytes=image_bytes,
+            mime_type=data.mime_type,
+            extra_fields_schema=extra_fields_schema,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Unable to extract intake data from image",
+        ) from exc
 
 
-@router.post("/transcribe")
+@router.post("/transcribe", response_model=TranscriptionResponse)
 async def transcribe_audio(
+    file: UploadFile = File(...),
     current_user: dict = Depends(require_role(["staff", "admin"])),
 ):
     """Transcribe audio via Gemini 2.5 Flash (native audio input). (Step 7)"""
-    raise HTTPException(status_code=501, detail="Not yet implemented")
+    mime_type = file.content_type or ""
+    if not (mime_type.startswith("audio/") or mime_type.startswith("video/")):
+        raise HTTPException(status_code=400, detail="Unsupported audio file type")
+
+    audio_bytes = await file.read()
+    if not audio_bytes:
+        raise HTTPException(status_code=400, detail="Uploaded audio is empty")
+
+    try:
+        return await transcribe_audio_bytes(
+            audio_bytes=audio_bytes,
+            mime_type=mime_type,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Unable to transcribe audio",
+        ) from exc
 
 
-@router.post("/structure-note")
+@router.post("/structure-note", response_model=StructureNoteResponse)
 async def structure_note(
+    data: StructureNoteRequest,
     current_user: dict = Depends(require_role(["staff", "admin"])),
 ):
     """Structure a transcript into a case note. Model: Gemini 2.5 Flash (Step 7)"""
-    raise HTTPException(status_code=501, detail="Not yet implemented")
+    try:
+        return await structure_transcript_note(
+            transcript=data.transcript,
+            service_types=data.service_types,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Unable to structure transcript",
+        ) from exc
 
 
 @router.post("/summarize-client")

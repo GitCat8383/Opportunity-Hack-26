@@ -37,6 +37,59 @@ export interface ServiceEntry {
   updated_at: string;
 }
 
+export interface Appointment {
+  id: string;
+  org_id: string;
+  client_id: string;
+  staff_id: string;
+  scheduled_at: string;
+  duration_minutes: number;
+  service_type: string | null;
+  status: "scheduled" | "completed" | "cancelled" | "no_show";
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ClientDocument {
+  id: string;
+  org_id: string;
+  client_id: string;
+  uploaded_by: string;
+  file_name: string;
+  file_type: string | null;
+  file_size: number | null;
+  storage_path: string;
+  description: string | null;
+  created_at: string;
+}
+
+export interface PhotoIntakeResult {
+  first_name: string | null;
+  last_name: string | null;
+  date_of_birth: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  language: string | null;
+  gender: string | null;
+  household_size: number | null;
+  status: string | null;
+  extra_fields: Record<string, string | number | null>;
+}
+
+export interface TranscriptionResult {
+  transcript: string;
+}
+
+export interface StructuredNoteResult {
+  summary: string | null;
+  service_type: string | null;
+  action_items: string[];
+  follow_up_date: string | null;
+  risk_flag: boolean;
+}
+
 export interface FollowUp {
   id: string;
   org_id: string;
@@ -110,4 +163,15 @@ export interface ServiceEntryListResponse {
   total: number;
   page: number;
   per_page: number;
+}
+
+export interface AppointmentListResponse {
+  appointments: Appointment[];
+  total: number;
+  page: number;
+  per_page: number;
+}
+
+export interface DocumentListResponse {
+  documents: ClientDocument[];
 }

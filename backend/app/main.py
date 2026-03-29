@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
-from app.routers import ai, clients, org_config, service_entries
+from app.routers import ai, appointments, clients, documents, org_config, service_entries
 
 settings = get_settings()
 
@@ -24,6 +24,8 @@ app.add_middleware(
 # Routers
 app.include_router(clients.router, prefix=settings.api_prefix)
 app.include_router(service_entries.router, prefix=settings.api_prefix)
+app.include_router(appointments.router, prefix=settings.api_prefix)
+app.include_router(documents.router, prefix=settings.api_prefix)
 app.include_router(org_config.router, prefix=settings.api_prefix)
 app.include_router(ai.router, prefix=settings.api_prefix)
 

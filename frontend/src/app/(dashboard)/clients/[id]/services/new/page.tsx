@@ -63,6 +63,7 @@ export default async function NewServiceEntryPage({
             clientId={client.id}
             serviceTypes={serviceTypes}
             staffName={profile.full_name}
+            canUseAi={profile.role === "staff" || profile.role === "admin"}
           />
         </div>
       </div>

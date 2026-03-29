@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+  <rect width="1200" height="900" fill="#d7cab5"/>
+  <g transform="translate(150 110) rotate(-4 450 320)">
+    <rect x="0" y="0" width="900" height="640" rx="20" fill="#f3ead7" stroke="#b08b5a" stroke-width="6"/>
+    <path d="M18 80 C120 60 220 92 320 74" stroke="#c9b18c" stroke-width="3" fill="none"/>
+    <path d="M70 620 C250 598 420 652 760 616" stroke="#d4bea0" stroke-width="3" fill="none"/>
+
+    <text x="56" y="84" font-family="'Courier New', monospace" font-size="28" fill="#6b4f3a">Quick Intake Notes</text>
+    <g font-family="'Bradley Hand', 'Comic Sans MS', cursive" font-size="34" fill="#312e81">
+      <text x="64" y="154">Ana M.</text>
+      <text x="64" y="212">dob maybe 02-19-91</text>
+      <text x="64" y="270">Spanish speaking</text>
+      <text x="64" y="328">3 kids / needs food + diapers</text>
+      <text x="64" y="386">staying w/ sister now</text>
+      <text x="64" y="444">call next Thurs re housing list</text>
+      <text x="64" y="502">phone 555 998 1220</text>
+      <text x="64" y="560">email: ana.mora.family@gmail.com</text>
+    </g>
+
+    <g stroke="#1f2937" stroke-width="3" opacity="0.22">
+      <line x1="58" y1="170" x2="826" y2="170"/>
+      <line x1="58" y1="228" x2="826" y2="228"/>
+      <line x1="58" y1="286" x2="826" y2="286"/>
+      <line x1="58" y1="344" x2="826" y2="344"/>
+      <line x1="58" y1="402" x2="826" y2="402"/>
+      <line x1="58" y1="460" x2="826" y2="460"/>
+      <line x1="58" y1="518" x2="826" y2="518"/>
+      <line x1="58" y1="576" x2="826" y2="576"/>
+    </g>
+  </g>
+</svg>

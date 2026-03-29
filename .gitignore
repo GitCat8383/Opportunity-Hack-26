@@ -49,3 +49,6 @@ npm-debug.log*
 # Claude Code
 .claude/
 dev.db
+
+# Local planning files
+build_plan.md

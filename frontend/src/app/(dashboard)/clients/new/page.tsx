@@ -4,7 +4,7 @@ import { requireAuthenticatedProfile } from "@/lib/auth";
 import type { OrgConfig } from "@/types";
 
 export default async function NewClientPage() {
-  const { session } = await requireAuthenticatedProfile([
+  const { profile, session } = await requireAuthenticatedProfile([
     "volunteer",
     "staff",
     "admin",
@@ -25,7 +25,10 @@ export default async function NewClientPage() {
       </div>
 
       <div className="rounded-lg border bg-card p-6">
-        <ClientForm extraFieldsSchema={orgConfig.extra_fields_schema} />
+        <ClientForm
+          extraFieldsSchema={orgConfig.extra_fields_schema}
+          canUseAi={profile.role === "staff" || profile.role === "admin"}
+        />
       </div>
     </div>
   );

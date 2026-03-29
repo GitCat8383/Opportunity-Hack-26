@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ClientDocumentsPanel } from "@/components/client-documents-panel";
 import { ApiError, apiFetch } from "@/lib/api";
 import { requireAuthenticatedProfile } from "@/lib/auth";
-import type { Client, OrgConfig, ServiceEntryListResponse } from "@/types";
+import type {
+  Client,
+  DocumentListResponse,
+  OrgConfig,
+  ServiceEntryListResponse,
+} from "@/types";
 
 type ClientProfilePageProps = {
   params: {
@@ -31,14 +37,19 @@ function DetailRow({
 export default async function ClientProfilePage({
   params,
 }: ClientProfilePageProps) {
-  const { session } = await requireAuthenticatedProfile();
+  const { profile, session } = await requireAuthenticatedProfile();
 
   try {
-    const [client, orgConfig, serviceEntries] = await Promise.all([
+    const [client, orgConfig, serviceEntries, documents] = await Promise.all([
       apiFetch<Client>(`/clients/${params.id}`, { cache: "no-store" }, session.access_token),
       apiFetch<OrgConfig>("/org-config", { cache: "no-store" }, session.access_token),
       apiFetch<ServiceEntryListResponse>(
         `/service-entries?client_id=${params.id}&per_page=100`,
+        { cache: "no-store" },
+        session.access_token
+      ),
+      apiFetch<DocumentListResponse>(
+        `/clients/${params.id}/documents`,
         { cache: "no-store" },
         session.access_token
       ),
@@ -58,12 +69,20 @@ export default async function ClientProfilePage({
               Client profile and service history
             </p>
           </div>
-          <Link
-            href={`/clients/${client.id}/services/new`}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
-          >
-            + Log Service
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/calendar?client_id=${client.id}`}
+              className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition"
+            >
+              Schedule Appointment
+            </Link>
+            <Link
+              href={`/clients/${client.id}/services/new`}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
+            >
+              + Log Service
+            </Link>
+          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
@@ -106,55 +125,63 @@ export default async function ClientProfilePage({
             </div>
           </section>
 
-          <section className="rounded-lg border bg-card p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-semibold">Service History</h2>
-              <p className="text-sm text-muted-foreground">
-                {serviceEntries.total} total entries
-              </p>
-            </div>
+          <div className="space-y-6">
+            <section className="rounded-lg border bg-card p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="font-semibold">Service History</h2>
+                <p className="text-sm text-muted-foreground">
+                  {serviceEntries.total} total entries
+                </p>
+              </div>
 
-            {serviceEntries.entries.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No services logged yet for this client.
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {serviceEntries.entries.map((entry) => (
-                  <article key={entry.id} className="rounded-lg border p-4">
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <p className="font-medium">{entry.service_type}</p>
+              {serviceEntries.entries.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No services logged yet for this client.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {serviceEntries.entries.map((entry) => (
+                    <article key={entry.id} className="rounded-lg border p-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <p className="font-medium">{entry.service_type}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {entry.service_date}
+                          </p>
+                        </div>
                         <p className="text-sm text-muted-foreground">
-                          {entry.service_date}
+                          Staff ID: {entry.staff_id}
                         </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Staff ID: {entry.staff_id}
-                      </p>
-                    </div>
 
-                    {entry.summary ? (
-                      <p className="mt-3 text-sm">
-                        <span className="font-medium">Summary:</span>{" "}
-                        {entry.summary}
-                      </p>
-                    ) : null}
+                      {entry.summary ? (
+                        <p className="mt-3 text-sm">
+                          <span className="font-medium">Summary:</span>{" "}
+                          {entry.summary}
+                        </p>
+                      ) : null}
 
-                    <p className="mt-3 whitespace-pre-wrap text-sm">
-                      {entry.notes || "No notes recorded."}
-                    </p>
-
-                    {entry.action_items.length > 0 ? (
-                      <p className="mt-3 text-sm text-muted-foreground">
-                        Action items: {entry.action_items.join(", ")}
+                      <p className="mt-3 whitespace-pre-wrap text-sm">
+                        {entry.notes || "No notes recorded."}
                       </p>
-                    ) : null}
-                  </article>
-                ))}
-              </div>
-            )}
-          </section>
+
+                      {entry.action_items.length > 0 ? (
+                        <p className="mt-3 text-sm text-muted-foreground">
+                          Action items: {entry.action_items.join(", ")}
+                        </p>
+                      ) : null}
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <ClientDocumentsPanel
+              clientId={client.id}
+              initialDocuments={documents.documents}
+              role={profile.role}
+            />
+          </div>
         </div>
       </div>
     );
