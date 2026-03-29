@@ -1,10 +1,11 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.middleware.auth import get_current_user
+from app.middleware.auth import get_current_user, require_role
+from app.models.client import Client
 from app.models.service_entry import ServiceEntry
 from app.schemas.service_entry import (
     ServiceEntryCreate,
@@ -12,6 +13,7 @@ from app.schemas.service_entry import (
     ServiceEntryResponse,
     ServiceEntryListResponse,
 )
+from app.services.semantic_search import embed_service_entry_background
 
 router = APIRouter(prefix="/service-entries", tags=["service-entries"])
 
@@ -49,10 +51,17 @@ async def list_service_entries(
 @router.post("", response_model=ServiceEntryResponse, status_code=status.HTTP_201_CREATED)
 async def create_service_entry(
     data: ServiceEntryCreate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(require_role(["volunteer", "staff", "admin"])),
 ):
     org_id = current_user.get("user_metadata", {}).get("org_id")
+    client_exists = await db.execute(
+        select(Client.id).where(Client.id == data.client_id, Client.org_id == org_id)
+    )
+    if client_exists.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Client not found")
+
     entry = ServiceEntry(
         org_id=org_id,
         staff_id=current_user["sub"],
@@ -61,6 +70,7 @@ async def create_service_entry(
     db.add(entry)
     await db.flush()
     await db.refresh(entry)
+    background_tasks.add_task(embed_service_entry_background, entry.id)
     return ServiceEntryResponse.model_validate(entry)
 
 
@@ -85,7 +95,7 @@ async def update_service_entry(
     entry_id: UUID,
     data: ServiceEntryUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(require_role(["staff", "admin"])),
 ):
     org_id = current_user.get("user_metadata", {}).get("org_id")
     result = await db.execute(

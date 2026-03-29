@@ -1,11 +1,9 @@
 from fastapi import Depends, HTTPException, Request, status
-from jose import JWTError, jwt
+
 from app.core.config import get_settings
+from app.core.supabase import get_supabase_admin, get_supabase_client
 
 settings = get_settings()
-
-# Supabase JWT secret is the anon key for verification
-SUPABASE_JWT_SECRET = settings.supabase_anon_key
 
 
 def get_token(request: Request) -> str:
@@ -19,16 +17,44 @@ def get_token(request: Request) -> str:
 
 
 def get_current_user(token: str = Depends(get_token)) -> dict:
-    """Decode Supabase JWT and return user payload."""
+    """Validate Supabase access token and enrich it with profile role/org data."""
     try:
-        payload = jwt.decode(
-            token,
-            SUPABASE_JWT_SECRET,
-            algorithms=["HS256"],
-            audience="authenticated",
+        auth_response = get_supabase_client().auth.get_user(token)
+        user = auth_response.user
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired token",
+            )
+
+        profile_response = (
+            get_supabase_admin()
+            .table("profiles")
+            .select("org_id, role, full_name, email")
+            .eq("id", user.id)
+            .maybe_single()
+            .execute()
         )
-        return payload
-    except JWTError:
+        profile = profile_response.data or {}
+        user_metadata = dict(user.user_metadata or {})
+        if profile:
+            user_metadata["org_id"] = profile.get("org_id", user_metadata.get("org_id"))
+            user_metadata["role"] = profile.get("role", user_metadata.get("role"))
+            user_metadata["full_name"] = profile.get(
+                "full_name",
+                user_metadata.get("full_name"),
+            )
+
+        return {
+            "sub": user.id,
+            "email": user.email,
+            "user_metadata": user_metadata,
+            "app_metadata": user.app_metadata or {},
+            "profile": profile,
+        }
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",

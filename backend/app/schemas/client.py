@@ -52,8 +52,12 @@ class ClientResponse(BaseModel):
     updated_at: datetime
 
 
+class ClientListItem(ClientResponse):
+    last_service_date: date | None = None
+
+
 class ClientListResponse(BaseModel):
-    clients: list[ClientResponse]
+    clients: list[ClientListItem]
     total: int
     page: int
     per_page: int

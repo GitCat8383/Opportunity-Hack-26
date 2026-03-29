@@ -17,6 +17,10 @@ export interface Client {
   updated_at: string;
 }
 
+export interface ClientListItem extends Client {
+  last_service_date: string | null;
+}
+
 export interface ServiceEntry {
   id: string;
   org_id: string;
@@ -62,4 +66,18 @@ export interface PaginatedResponse<T> {
   page: number;
   per_page: number;
   items: T[];
+}
+
+export interface ClientListResponse {
+  clients: ClientListItem[];
+  total: number;
+  page: number;
+  per_page: number;
+}
+
+export interface ServiceEntryListResponse {
+  entries: ServiceEntry[];
+  total: number;
+  page: number;
+  per_page: number;
 }

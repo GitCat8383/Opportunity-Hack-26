@@ -1,11 +1,10 @@
 """
 Seed script for Nonprofit Client & Case Management Platform.
-Inserts: 1 org, 3 staff profiles, 15 clients, 50 service entries.
+Inserts: 1 org, 3 staff profiles (with auth users), 15 clients, 50 service entries.
 Fictional nonprofit: "Sunrise Services" — a food bank + social services org.
 
 Usage:
     pip install supabase python-dotenv
-    cp ../.env.example .env  # fill in real values
     python seed.py
 """
 
@@ -32,11 +31,11 @@ org = {
     "settings": {},
 }
 
-# ── Staff (fake UUIDs — these won't link to real auth.users in seed mode) ─
-STAFF = [
-    {"id": str(uuid.uuid4()), "full_name": "Maria Lopez", "email": "maria@sunrise.org", "role": "admin"},
-    {"id": str(uuid.uuid4()), "full_name": "James Carter", "email": "james@sunrise.org", "role": "staff"},
-    {"id": str(uuid.uuid4()), "full_name": "Aisha Patel", "email": "aisha@sunrise.org", "role": "volunteer"},
+# ── Staff definitions ────────────────────────────────────────
+STAFF_DEFS = [
+    {"full_name": "Maria Lopez", "email": "maria@sunrise-demo.org", "role": "admin", "password": "SeedPass123!"},
+    {"full_name": "James Carter", "email": "james@sunrise-demo.org", "role": "staff", "password": "SeedPass123!"},
+    {"full_name": "Aisha Patel", "email": "aisha@sunrise-demo.org", "role": "volunteer", "password": "SeedPass123!"},
 ]
 
 # ── Clients ───────────────────────────────────────────────────
@@ -118,7 +117,32 @@ CASE_NOTES = [
     "Client called in crisis — facing eviction notice. Emergency meeting scheduled for tomorrow. Contacting legal aid tonight.",
 ]
 
-def build_clients():
+
+def create_auth_users():
+    """Create real Supabase auth users so profile FK constraints are satisfied."""
+    staff_with_ids = []
+    for s in STAFF_DEFS:
+        print(f"  Creating auth user: {s['email']}")
+        result = supabase.auth.admin.create_user({
+            "email": s["email"],
+            "password": s["password"],
+            "email_confirm": True,
+            "user_metadata": {
+                "org_id": ORG_ID,
+                "full_name": s["full_name"],
+                "role": s["role"],
+            },
+        })
+        staff_with_ids.append({
+            "id": result.user.id,
+            "full_name": s["full_name"],
+            "email": s["email"],
+            "role": s["role"],
+        })
+    return staff_with_ids
+
+
+def build_clients(staff_ids):
     clients = []
     client_ids = []
     for c in CLIENT_DATA:
@@ -136,17 +160,17 @@ def build_clients():
             "household_size": c["household_size"],
             "status": "active",
             "extra_fields": {},
-            "created_by": STAFF[0]["id"],
+            "created_by": staff_ids[0],
         })
     return clients, client_ids
 
 
-def build_service_entries(client_ids):
+def build_service_entries(client_ids, staff_ids):
     entries = []
     today = date.today()
     for i in range(50):
         client_id = random.choice(client_ids)
-        staff = random.choice(STAFF)
+        staff_id = random.choice(staff_ids)
         days_ago = random.randint(1, 180)
         service_date = today - timedelta(days=days_ago)
         note = random.choice(CASE_NOTES)
@@ -154,7 +178,7 @@ def build_service_entries(client_ids):
             "id": str(uuid.uuid4()),
             "org_id": ORG_ID,
             "client_id": client_id,
-            "staff_id": staff["id"],
+            "staff_id": staff_id,
             "service_date": service_date.isoformat(),
             "service_type": random.choice(SERVICE_TYPES),
             "notes": note,
@@ -194,32 +218,41 @@ def seed():
     print("  Creating org config...")
     supabase.table("org_config").insert(build_org_config()).execute()
 
-    # 3. Profiles (note: in production, these link to auth.users)
-    print(f"  Creating {len(STAFF)} staff profiles...")
-    for s in STAFF:
-        supabase.table("profiles").insert({
-            "id": s["id"],
-            "org_id": ORG_ID,
-            "full_name": s["full_name"],
-            "email": s["email"],
-            "role": s["role"],
-            "is_active": True,
-        }).execute()
+    # 3. Auth users + Profiles
+    # The handle_new_user trigger auto-creates profiles when auth users are created.
+    # But we insert profiles manually to ensure correct data, so we check if the
+    # trigger already created them and skip if so.
+    print(f"  Creating {len(STAFF_DEFS)} auth users (profiles auto-created by trigger)...")
+    staff = create_auth_users()
+    staff_ids = [s["id"] for s in staff]
+
+    # Verify profiles were created by the trigger
+    profiles = supabase.table("profiles").select("id, full_name, role").execute()
+    print(f"  Profiles in DB: {len(profiles.data)}")
+    for p in profiles.data:
+        print(f"    - {p['full_name']} ({p['role']})")
 
     # 4. Clients
-    clients, client_ids = build_clients()
+    clients, client_ids = build_clients(staff_ids)
     print(f"  Creating {len(clients)} clients...")
     supabase.table("clients").insert(clients).execute()
 
     # 5. Service entries
-    entries = build_service_entries(client_ids)
+    entries = build_service_entries(client_ids, staff_ids)
     print(f"  Creating {len(entries)} service entries...")
     # Insert in batches of 25
     for i in range(0, len(entries), 25):
         batch = entries[i:i + 25]
         supabase.table("service_entries").insert(batch).execute()
 
-    print("Done! Seeded Sunrise Services with 15 clients and 50 service entries.")
+    print("\nDone! Seeded Sunrise Services with:")
+    print(f"  - 1 organization (ID: {ORG_ID})")
+    print(f"  - {len(staff)} staff (auth users with profiles)")
+    print(f"  - {len(clients)} clients")
+    print(f"  - {len(entries)} service entries")
+    print(f"\nDemo login credentials (all passwords: SeedPass123!):")
+    for s in staff:
+        print(f"  - {s['email']} ({s['role']})")
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ A lightweight, AI-powered client and case management web application built for s
 | Backend | Python 3.11, FastAPI, SQLAlchemy, Alembic |
 | Database | Supabase (PostgreSQL 15 + pgvector) |
 | Auth | Supabase Auth (Google SSO + email/password) |
-| AI | Google Gemini 2.5 Pro, Gemini 2.0 Flash, Gemini text-embedding-004 |
+| AI | Google Gemini 2.5 Pro, Gemini 2.5 Flash, Gemini gemini-embedding-001 |
 | Hosting | Vercel (frontend), Railway/Render (backend) |
 
 ## Features
@@ -23,7 +23,7 @@ A lightweight, AI-powered client and case management web application built for s
 - Multi-tenant data isolation via Supabase RLS
 
 **AI-Powered (P2)**
-- Voice-to-structured case notes (Gemini 2.0 Flash native audio)
+- Voice-to-structured case notes (Gemini 2.5 Flash native audio)
 - Photo-to-intake form digitization (Gemini 2.5 Pro vision)
 - Semantic search across all case notes (pgvector)
 - AI-generated client handoff summaries

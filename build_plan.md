@@ -6,7 +6,7 @@ Techstack:
 Frontend: Next.js 14+ (React 18, TypeScript), shadcn/ui + Tailwind CSS
 Backend: Python 3.11, FastAPI + SQLAlchemy + Alembic
 Database: Supabase (PostgreSQL 15 + pgvector)
-AI: Google Gemini 2.5 Pro (vision, summaries, reports), Gemini 2.0 Flash (transcription, structuring, follow-ups, translation), Gemini text-embedding-004 (semantic search)
+AI: Google Gemini 2.5 Pro (vision, summaries, reports), Gemini 2.5 Flash (transcription, structuring, follow-ups, translation), Gemini gemini-embedding-001 (semantic search)
 Auth & Security: Supabase Auth (Google SSO + email, JWT)
 Hosting: Vercel (frontend), Railway/Render (backend)
 
@@ -29,34 +29,34 @@ Step 1: ✅ COMPLETED
 [x] Scaffold FastAPI project locally → backend/
 [x] Scaffold Next.js 14+ frontend locally, install shadcn/ui + Tailwind → frontend/
 [x] Write README with one-click deploy instructions and project overview → README.md
-Step 2:
-[ ] Paste DB schema into Supabase SQL editor, run it
-[ ] Enable pgvector extension (CREATE EXTENSION IF NOT EXISTS vector)
-[ ] Set up Supabase Google SSO, create Admin + Staff test accounts
-[ ] Configure RLS policies on clients, service_entries, follow_ups, audit_log
-[ ] Deploy FastAPI skeleton to Railway/Render, confirm it's live
-[ ] Deploy Vite frontend to Vercel, confirm it's live
-[ ] Set all env vars on both deployments (SUPABASE_URL, SUPABASE_ANON_KEY, GEMINI_API_KEY)
-[ ] Run seed script, confirm data appears in Supabase dashboard
-[ ] Create POST /ai/{action} skeleton route with auth check
-[ ] Create prompts table with version history (prompt registry for AI system prompts)
-[ ] Create organizations table and ensure all data tables include org_id for multi-tenant isolation
-[ ] Verify RLS policies enforce org-level data isolation across all tables
+Step 2: 🔄 IN PROGRESS
+[x] Paste DB schema into Supabase SQL editor, run it (14 tables, 22 indexes, pgvector 0.8.0)
+[x] Enable pgvector extension (CREATE EXTENSION IF NOT EXISTS vector)
+[ ] Set up Supabase Google SSO, create Admin + Staff test accounts — MANUAL (user)
+[x] Configure RLS policies on clients, service_entries, follow_ups, audit_log (34 policies on 13 tables)
+[ ] Deploy FastAPI skeleton to Railway/Render, confirm it's live — MANUAL (user)
+[ ] Deploy Next.js frontend to Vercel, confirm it's live — MANUAL (user)
+[ ] Set all env vars on both deployments (SUPABASE_URL, SUPABASE_ANON_KEY, GEMINI_API_KEY) — MANUAL (user)
+[x] Run seed script, confirm data appears in Supabase dashboard (1 org, 3 staff, 15 clients, 50 entries)
+[x] Create POST /ai/{action} skeleton route with auth check (9 endpoints in ai.py)
+[x] Create prompts table with version history (prompt registry for AI system prompts)
+[x] Create organizations table and ensure all data tables include org_id for multi-tenant isolation
+[x] Verify RLS policies enforce org-level data isolation across all tables
 Step 3:
-[ ] Client list page with search by name
-[ ] Client registration form (name, DOB, phone, email + extra_fields JSONB)
-[ ] Client profile page (demographics + service history, reverse chron)
-[ ] Service entry form (date, service type dropdown, staff, notes)
-[ ] Role-based route guards (middleware checking Supabase session + role)
+[x] Client list page with search by name
+[x] Client registration form (name, DOB, phone, email + extra_fields JSONB)
+[x] Client profile page (demographics + service history, reverse chron)
+[x] Service entry form (date, service type dropdown, staff, notes)
+[x] Role-based route guards (middleware checking Supabase session + role)
 Step 4:
-[ ] POST /ai/embed — takes service_entry_id, calls Gemini text-embedding-004, stores in embeddings table
-[ ] Backfill script — embed all 50 seed service entries now (so pgvector index is warm)
-[ ] match_documents Supabase RPC function (cosine similarity, threshold 0.75, limit 10)
-[ ] POST /ai/search — embed query, run RPC, return matched entries with client + snippet
-[ ] Add embed-on-save hook to service entry creation endpoint (async, non-blocking)
-[ ] Test semantic search with 5 natural language queries
+[x] POST /ai/embed — takes service_entry_id, calls Gemini gemini-embedding-001, stores in embeddings table
+[x] Backfill script — embed all 50 seed service entries now (so pgvector index is warm)
+[x] match_documents Supabase RPC function (cosine similarity, threshold 0.75, limit 10)
+[x] POST /ai/search — embed query, run RPC, return matched entries with client + snippet
+[x] Add embed-on-save hook to service entry creation endpoint (async, non-blocking)
+[x] Test semantic search with 5 natural language queries
 Step 5:
-[ ] org_config table — store extra_fields JSON schema per org
+[x] org_config table — store extra_fields JSON schema per org
 [ ] Admin panel to add/remove custom fields (renders dynamically on client form)
 [ ] CSV export — clients table → download via pandas or manual CSV build
 [ ] CSV import — upload CSV, parse, bulk insert with validation errors shown inline
@@ -73,8 +73,8 @@ Step 7: AI — Photo Intake & Voice Notes
 [ ] POST /ai/photo-intake — base64 image → Gemini 2.5 Pro → JSON → pre-fill form fields
 [ ] Prepare 3 demo images (handwritten form, printed form, napkin)
 [ ] Record button on service entry form (browser MediaRecorder API → .webm blob)
-[ ] POST /ai/transcribe — audio blob → Gemini 2.0 Flash (native audio) → transcript
-[ ] POST /ai/structure-note — transcript + service types → Gemini 2.0 Flash → structured JSON (summary, service type, action items, follow-up date, risk flag)
+[ ] POST /ai/transcribe — audio blob → Gemini 2.5 Flash (native audio) → transcript
+[ ] POST /ai/structure-note — transcript + service types → Gemini 2.5 Flash → structured JSON (summary, service type, action items, follow-up date, risk flag)
 [ ] Pre-fill service entry form fields from structured JSON response
 [ ] Add loading toast: "Recording → Transcribing → Structuring"
 Step 8: Audit Log, Summaries & Follow-Ups
@@ -83,7 +83,7 @@ Step 8: Audit Log, Summaries & Follow-Ups
 [ ] POST /ai/summarize-client — fetch all service entries for client, send to Gemini 2.5 Pro, return structured handoff summary
 [ ] "Generate Summary" button on client profile with "Regenerate" + copy-to-clipboard
 [ ] Ensure all AI outputs are shown as editable drafts — never auto-saved without human confirmation (human-in-the-loop)
-[ ] POST /ai/extract-followups — async call on every service entry save → Gemini 2.0 Flash → writes to follow_ups table
+[ ] POST /ai/extract-followups — async call on every service entry save → Gemini 2.5 Flash → writes to follow_ups table
 [ ] Dashboard "Pending Follow-Ups" widget sorted by urgency (Supabase Realtime subscription)
 Step 9: Full Integration & Funder Reports
 [ ] Wire all AI features into actual UI (semantic search bar, voice button, photo button, summary button, follow-ups widget)
@@ -96,7 +96,7 @@ Step 9: Full Integration & Funder Reports
 [ ] Prepare "before vs after" demo: raw CSV dump vs polished report side by side
 Step 10:
 [ ] Language toggle (EN/ES) on registration and service entry forms
-[ ] POST /ai/translate — check translations cache table first, call Gemini 2.0 Flash on miss, store result
+[ ] POST /ai/translate — check translations cache table first, call Gemini 2.5 Flash on miss, store result
 [ ] Batch-translate all form labels + placeholder text on language switch
 [ ] "Translate Note" toggle on case notes (inline translation, lighter font color)
 [ ] Reporting dashboard page — 4 charts using Recharts: active clients (stat), services this week/month/quarter (bar), service type breakdown (pie), visit trend (line)
@@ -114,6 +114,3 @@ Step 12: Polish & Launch
 [ ] Fix bugs found during integration
 [ ] Double-check all env vars set in production deployments
 [ ] Update README with final setup instructions, architecture diagram, and screenshots
-
-
-

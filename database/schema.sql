@@ -174,7 +174,7 @@ CREATE TABLE embeddings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     service_entry_id UUID NOT NULL UNIQUE REFERENCES service_entries(id) ON DELETE CASCADE,
-    embedding vector(768),            -- Gemini text-embedding-004 dimension
+    embedding vector(768),             -- Gemini embedding-001 (output_dimensionality=768)
     content_snippet TEXT,              -- first ~500 chars for display
     created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -231,7 +231,7 @@ CREATE TABLE ai_usage_log (
     org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE RESTRICT,
     feature TEXT NOT NULL,             -- 'transcribe', 'structure_note', 'photo_intake', 'embed', 'search', 'summarize', 'follow_ups', 'funder_report', 'translate'
-    model TEXT NOT NULL,               -- 'gemini-2.5-pro', 'gemini-2.0-flash', 'text-embedding-004'
+    model TEXT NOT NULL,               -- 'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-embedding-001'
     input_tokens INTEGER DEFAULT 0,
     output_tokens INTEGER DEFAULT 0,
     cost_cents NUMERIC(10,4) DEFAULT 0,
@@ -308,11 +308,11 @@ END;
 $$;
 
 -- ============================================================
--- 16. Row-Level Security Policies
+-- 16. Auth Helper Functions (public schema to avoid auth permission issues)
 -- ============================================================
 
 -- Helper: get current user's org_id
-CREATE OR REPLACE FUNCTION auth.user_org_id()
+CREATE OR REPLACE FUNCTION public.user_org_id()
 RETURNS UUID
 LANGUAGE sql STABLE
 AS $$
@@ -320,12 +320,16 @@ AS $$
 $$;
 
 -- Helper: get current user's role
-CREATE OR REPLACE FUNCTION auth.user_role()
+CREATE OR REPLACE FUNCTION public.user_role()
 RETURNS TEXT
 LANGUAGE sql STABLE
 AS $$
     SELECT role FROM profiles WHERE id = auth.uid()
 $$;
+
+-- ============================================================
+-- 17. Row-Level Security Policies
+-- ============================================================
 
 -- Enable RLS on all org-scoped tables
 -- NOTE: translations table is intentionally excluded — it's a global shared cache
@@ -346,12 +350,12 @@ ALTER TABLE client_summaries ENABLE ROW LEVEL SECURITY;
 -- Organizations: users can only see their own org
 CREATE POLICY "Users can view own org"
     ON organizations FOR SELECT
-    USING (id = auth.user_org_id());
+    USING (id = public.user_org_id());
 
 -- Profiles: users can see profiles in their org
 CREATE POLICY "Users can view org profiles"
     ON profiles FOR SELECT
-    USING (org_id = auth.user_org_id());
+    USING (org_id = public.user_org_id());
 
 CREATE POLICY "Users can update own profile"
     ON profiles FOR UPDATE
@@ -359,141 +363,141 @@ CREATE POLICY "Users can update own profile"
 
 CREATE POLICY "Admins can manage org profiles"
     ON profiles FOR ALL
-    USING (org_id = auth.user_org_id() AND auth.user_role() = 'admin');
+    USING (org_id = public.user_org_id() AND public.user_role() = 'admin');
 
 -- Org Config: admins can manage, all can read
 CREATE POLICY "Users can view org config"
     ON org_config FOR SELECT
-    USING (org_id = auth.user_org_id());
+    USING (org_id = public.user_org_id());
 
 CREATE POLICY "Admins can manage org config"
     ON org_config FOR ALL
-    USING (org_id = auth.user_org_id() AND auth.user_role() = 'admin');
+    USING (org_id = public.user_org_id() AND public.user_role() = 'admin');
 
 -- Clients: org-isolated, role-based write access
 CREATE POLICY "Users can view org clients"
     ON clients FOR SELECT
-    USING (org_id = auth.user_org_id());
+    USING (org_id = public.user_org_id());
 
 CREATE POLICY "Volunteers and staff can create clients"
     ON clients FOR INSERT
-    WITH CHECK (org_id = auth.user_org_id());
+    WITH CHECK (org_id = public.user_org_id());
 
 CREATE POLICY "Staff can update clients"
     ON clients FOR UPDATE
-    USING (org_id = auth.user_org_id() AND auth.user_role() IN ('staff', 'admin'));
+    USING (org_id = public.user_org_id() AND public.user_role() IN ('staff', 'admin'));
 
 CREATE POLICY "Admins can delete clients"
     ON clients FOR DELETE
-    USING (org_id = auth.user_org_id() AND auth.user_role() = 'admin');
+    USING (org_id = public.user_org_id() AND public.user_role() = 'admin');
 
 -- Service Entries: org-isolated
 CREATE POLICY "Users can view org service entries"
     ON service_entries FOR SELECT
-    USING (org_id = auth.user_org_id());
+    USING (org_id = public.user_org_id());
 
 CREATE POLICY "Users can create service entries"
     ON service_entries FOR INSERT
-    WITH CHECK (org_id = auth.user_org_id());
+    WITH CHECK (org_id = public.user_org_id());
 
 CREATE POLICY "Staff can update service entries"
     ON service_entries FOR UPDATE
-    USING (org_id = auth.user_org_id() AND auth.user_role() IN ('staff', 'admin'));
+    USING (org_id = public.user_org_id() AND public.user_role() IN ('staff', 'admin'));
 
 CREATE POLICY "Admins can delete service entries"
     ON service_entries FOR DELETE
-    USING (org_id = auth.user_org_id() AND auth.user_role() = 'admin');
+    USING (org_id = public.user_org_id() AND public.user_role() = 'admin');
 
 -- Follow-Ups: org-isolated
 CREATE POLICY "Users can view org follow-ups"
     ON follow_ups FOR SELECT
-    USING (org_id = auth.user_org_id());
+    USING (org_id = public.user_org_id());
 
 CREATE POLICY "System and staff can create follow-ups"
     ON follow_ups FOR INSERT
-    WITH CHECK (org_id = auth.user_org_id());
+    WITH CHECK (org_id = public.user_org_id());
 
 CREATE POLICY "Staff can update follow-ups"
     ON follow_ups FOR UPDATE
-    USING (org_id = auth.user_org_id() AND auth.user_role() IN ('staff', 'admin'));
+    USING (org_id = public.user_org_id() AND public.user_role() IN ('staff', 'admin'));
 
 CREATE POLICY "Admins can delete follow-ups"
     ON follow_ups FOR DELETE
-    USING (org_id = auth.user_org_id() AND auth.user_role() = 'admin');
+    USING (org_id = public.user_org_id() AND public.user_role() = 'admin');
 
 -- Appointments: org-isolated
 CREATE POLICY "Users can view org appointments"
     ON appointments FOR SELECT
-    USING (org_id = auth.user_org_id());
+    USING (org_id = public.user_org_id());
 
 CREATE POLICY "Staff can manage appointments"
     ON appointments FOR ALL
-    USING (org_id = auth.user_org_id() AND auth.user_role() IN ('staff', 'admin'));
+    USING (org_id = public.user_org_id() AND public.user_role() IN ('staff', 'admin'));
 
 -- Documents: org-isolated
 CREATE POLICY "Users can view org documents"
     ON documents FOR SELECT
-    USING (org_id = auth.user_org_id());
+    USING (org_id = public.user_org_id());
 
 CREATE POLICY "Users can upload documents"
     ON documents FOR INSERT
-    WITH CHECK (org_id = auth.user_org_id());
+    WITH CHECK (org_id = public.user_org_id());
 
 CREATE POLICY "Staff can delete documents"
     ON documents FOR DELETE
-    USING (org_id = auth.user_org_id() AND auth.user_role() IN ('staff', 'admin'));
+    USING (org_id = public.user_org_id() AND public.user_role() IN ('staff', 'admin'));
 
 -- Embeddings: org-isolated, managed by backend service role
 CREATE POLICY "Users can view org embeddings"
     ON embeddings FOR SELECT
-    USING (org_id = auth.user_org_id());
+    USING (org_id = public.user_org_id());
 
 CREATE POLICY "System can manage embeddings"
     ON embeddings FOR INSERT
-    WITH CHECK (org_id = auth.user_org_id());
+    WITH CHECK (org_id = public.user_org_id());
 
 -- Prompts: org-isolated + global defaults
 CREATE POLICY "Users can view prompts"
     ON prompts FOR SELECT
-    USING (org_id IS NULL OR org_id = auth.user_org_id());
+    USING (org_id IS NULL OR org_id = public.user_org_id());
 
 CREATE POLICY "Admins can manage org prompts"
     ON prompts FOR ALL
-    USING (org_id = auth.user_org_id() AND auth.user_role() = 'admin');
+    USING (org_id = public.user_org_id() AND public.user_role() = 'admin');
 
 -- AI Usage Log: admins only
 CREATE POLICY "Admins can view AI usage"
     ON ai_usage_log FOR SELECT
-    USING (org_id = auth.user_org_id() AND auth.user_role() = 'admin');
+    USING (org_id = public.user_org_id() AND public.user_role() = 'admin');
 
 CREATE POLICY "System can log AI usage"
     ON ai_usage_log FOR INSERT
-    WITH CHECK (org_id = auth.user_org_id());
+    WITH CHECK (org_id = public.user_org_id());
 
 -- Audit Log: admins only
 CREATE POLICY "Admins can view audit log"
     ON audit_log FOR SELECT
-    USING (org_id = auth.user_org_id() AND auth.user_role() = 'admin');
+    USING (org_id = public.user_org_id() AND public.user_role() = 'admin');
 
 CREATE POLICY "System can write audit log"
     ON audit_log FOR INSERT
-    WITH CHECK (org_id = auth.user_org_id());
+    WITH CHECK (org_id = public.user_org_id());
 
 -- Client Summaries: org-isolated
 CREATE POLICY "Users can view client summaries"
     ON client_summaries FOR SELECT
-    USING (org_id = auth.user_org_id());
+    USING (org_id = public.user_org_id());
 
 CREATE POLICY "Staff can create summaries"
     ON client_summaries FOR INSERT
-    WITH CHECK (org_id = auth.user_org_id() AND auth.user_role() IN ('staff', 'admin'));
+    WITH CHECK (org_id = public.user_org_id() AND public.user_role() IN ('staff', 'admin'));
 
 CREATE POLICY "Staff can delete summaries"
     ON client_summaries FOR DELETE
-    USING (org_id = auth.user_org_id() AND auth.user_role() IN ('staff', 'admin'));
+    USING (org_id = public.user_org_id() AND public.user_role() IN ('staff', 'admin'));
 
 -- ============================================================
--- 17. Triggers: auto-update updated_at
+-- 18. Triggers: auto-update updated_at
 -- ============================================================
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER
@@ -534,7 +538,7 @@ CREATE TRIGGER trg_appointments_updated
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- ============================================================
--- 18. Triggers: audit log on clients and service_entries
+-- 19. Triggers: audit log on clients and service_entries
 -- ============================================================
 CREATE OR REPLACE FUNCTION log_audit_event()
 RETURNS TRIGGER
@@ -595,18 +599,18 @@ CREATE TRIGGER trg_service_entries_audit
     FOR EACH ROW EXECUTE FUNCTION log_audit_event();
 
 -- ============================================================
--- 19. Trigger: auto-create profile on Supabase Auth signup
+-- 20. Trigger: auto-create profile on Supabase Auth signup
 --     New users get a profile with 'volunteer' role.
 --     Admin must manually promote to 'staff' or 'admin'.
 --     org_id must be set in user_metadata during signup.
 -- ============================================================
-CREATE OR REPLACE FUNCTION handle_new_user()
+CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = public
 AS $$
 BEGIN
-    INSERT INTO profiles (id, org_id, full_name, email, role)
+    INSERT INTO public.profiles (id, org_id, full_name, email, role)
     VALUES (
         NEW.id,
         (NEW.raw_user_meta_data ->> 'org_id')::UUID,
@@ -620,4 +624,4 @@ $$;
 
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
-    FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();

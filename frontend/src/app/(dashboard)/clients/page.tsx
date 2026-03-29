@@ -1,6 +1,25 @@
 import Link from "next/link";
 
-export default function ClientsPage() {
+import { apiFetch } from "@/lib/api";
+import { requireAuthenticatedProfile } from "@/lib/auth";
+import type { ClientListResponse } from "@/types";
+
+type ClientsPageProps = {
+  searchParams?: {
+    search?: string;
+  };
+};
+
+export default async function ClientsPage({ searchParams }: ClientsPageProps) {
+  const { session } = await requireAuthenticatedProfile();
+  const search = searchParams?.search?.trim() ?? "";
+  const query = search ? `?search=${encodeURIComponent(search)}` : "";
+  const data = await apiFetch<ClientListResponse>(
+    `/clients${query}`,
+    { cache: "no-store" },
+    session.access_token
+  );
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -21,14 +40,16 @@ export default function ClientsPage() {
         </div>
       </div>
 
-      {/* Search */}
-      <input
-        type="text"
-        placeholder="Search clients by name..."
-        className="w-full max-w-sm rounded-md border border-input bg-background px-3 py-2 text-sm"
-      />
+      <form className="w-full max-w-sm">
+        <input
+          type="text"
+          name="search"
+          defaultValue={search}
+          placeholder="Search clients by name..."
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        />
+      </form>
 
-      {/* Client table — will be wired in Step 3 */}
       <div className="rounded-lg border">
         <table className="w-full text-sm">
           <thead>
@@ -40,14 +61,41 @@ export default function ClientsPage() {
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td colSpan={4} className="p-6 text-center text-muted-foreground">
-                No clients yet. Click &quot;+ New Client&quot; to get started.
-              </td>
-            </tr>
+            {data.clients.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={4}
+                  className="p-6 text-center text-muted-foreground"
+                >
+                  No clients found. Click &quot;+ New Client&quot; to get started.
+                </td>
+              </tr>
+            ) : (
+              data.clients.map((client) => (
+                <tr key={client.id} className="border-t">
+                  <td className="p-3">
+                    <Link
+                      href={`/clients/${client.id}`}
+                      className="font-medium hover:underline"
+                    >
+                      {client.first_name} {client.last_name}
+                    </Link>
+                  </td>
+                  <td className="p-3 uppercase">{client.language}</td>
+                  <td className="p-3">
+                    {client.last_service_date ?? "No services yet"}
+                  </td>
+                  <td className="p-3 capitalize">{client.status}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
+
+      <p className="text-sm text-muted-foreground">
+        Showing {data.clients.length} of {data.total} clients
+      </p>
     </div>
   );
 }
