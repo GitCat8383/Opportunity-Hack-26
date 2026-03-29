@@ -1,33 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
-import { signInWithEmailPassword, type LoginFormState } from "./actions";
-
-function EmailSignInButton() {
-  const { pending } = useFormStatus();
-
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="w-full rounded-md bg-primary py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition"
-    >
-      {pending ? "Signing in..." : "Sign In with Email"}
-    </button>
-  );
-}
 
 export default function LoginPage() {
-  const initialLoginFormState: LoginFormState = { error: null };
-  const [formState, formAction] = useFormState(
-    signInWithEmailPassword,
-    initialLoginFormState
-  );
+  const router = useRouter();
   const [oauthLoading, setOauthLoading] = useState(false);
   const [oauthError, setOauthError] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const supabase = createClient();
 
@@ -44,6 +29,40 @@ export default function LoginPage() {
     }
   }
 
+  async function handleEmailLogin(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setEmailLoading(true);
+    setEmailError(null);
+    setOauthError(null);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+
+    if (error) {
+      setEmailError(error.message);
+      setEmailLoading(false);
+      return;
+    }
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session) {
+        router.replace("/dashboard");
+        router.refresh();
+        return;
+      }
+
+      await new Promise((resolve) => window.setTimeout(resolve, 150));
+    }
+
+    window.location.href = "/dashboard";
+  }
+
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-sm space-y-6">
@@ -54,13 +73,13 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {(formState.error || oauthError) && (
+        {(emailError || oauthError) && (
           <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-            {formState.error ?? oauthError}
+            {emailError ?? oauthError}
           </div>
         )}
 
-        <form action={formAction} className="space-y-4">
+        <form onSubmit={handleEmailLogin} className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium mb-1">
               Email
@@ -70,6 +89,8 @@ export default function LoginPage() {
               name="email"
               type="email"
               required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               placeholder="you@nonprofit.org"
             />
@@ -86,10 +107,18 @@ export default function LoginPage() {
               name="password"
               type="password"
               required
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             />
           </div>
-          <EmailSignInButton />
+          <button
+            type="submit"
+            disabled={emailLoading}
+            className="w-full rounded-md bg-primary py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition"
+          >
+            {emailLoading ? "Signing in..." : "Sign In with Email"}
+          </button>
         </form>
 
         <div className="relative">
