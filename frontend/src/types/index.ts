@@ -61,6 +61,36 @@ export interface UserProfile {
   avatar_url: string | null;
 }
 
+export interface CustomFieldDefinition {
+  key: string;
+  label: string;
+  field_type: "text" | "textarea" | "number" | "date" | "select";
+  required: boolean;
+  options: string[];
+}
+
+export interface OrgConfig {
+  org_id: string;
+  extra_fields_schema: CustomFieldDefinition[];
+  service_types: string[];
+  ai_features_enabled: Record<string, boolean>;
+  ai_monthly_budget_cents: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ClientImportRowError {
+  row_number: number;
+  errors: string[];
+  row_data: Record<string, string>;
+}
+
+export interface ClientImportResponse {
+  inserted_count: number;
+  failed_count: number;
+  errors: ClientImportRowError[];
+}
+
 export interface PaginatedResponse<T> {
   total: number;
   page: number;

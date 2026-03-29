@@ -5,27 +5,17 @@ import { useRouter } from "next/navigation";
 
 import { apiFetch, ApiError } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
+import type { CustomFieldDefinition } from "@/types";
 
-type ExtraField = {
-  id: string;
-  key: string;
-  value: string;
+type ClientFormProps = {
+  extraFieldsSchema: CustomFieldDefinition[];
 };
 
-const EMPTY_EXTRA_FIELD = () => ({
-  id: crypto.randomUUID(),
-  key: "",
-  value: "",
-});
-
-export function ClientForm() {
+export function ClientForm({ extraFieldsSchema }: ClientFormProps) {
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [extraFields, setExtraFields] = useState<ExtraField[]>([
-    EMPTY_EXTRA_FIELD(),
-  ]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -42,13 +32,14 @@ export function ClientForm() {
       return;
     }
 
-    const extraFieldsPayload = extraFields.reduce<Record<string, string>>(
+    const extraFieldsPayload = extraFieldsSchema.reduce<Record<string, string | number>>(
       (acc, field) => {
-        const key = field.key.trim();
-        const value = field.value.trim();
-        if (key) {
-          acc[key] = value;
+        const rawValue = formData.get(`extra_${field.key}`);
+        const value = rawValue == null ? "" : String(rawValue).trim();
+        if (!value) {
+          return acc;
         }
+        acc[field.key] = field.field_type === "number" ? Number(value) : value;
         return acc;
       },
       {}
@@ -86,22 +77,6 @@ export function ClientForm() {
       );
       setLoading(false);
     }
-  }
-
-  function updateExtraField(id: string, field: "key" | "value", value: string) {
-    setExtraFields((current) =>
-      current.map((item) => (item.id === id ? { ...item, [field]: value } : item))
-    );
-  }
-
-  function addExtraField() {
-    setExtraFields((current) => [...current, EMPTY_EXTRA_FIELD()]);
-  }
-
-  function removeExtraField(id: string) {
-    setExtraFields((current) =>
-      current.length === 1 ? [EMPTY_EXTRA_FIELD()] : current.filter((item) => item.id !== id)
-    );
   }
 
   return (
@@ -191,53 +166,74 @@ export function ClientForm() {
         />
       </label>
 
-      <div className="space-y-3 rounded-lg border p-4">
-        <div className="flex items-center justify-between">
+      {extraFieldsSchema.length > 0 ? (
+        <div className="space-y-3 rounded-lg border p-4">
           <div>
-            <h2 className="font-semibold">Additional Fields</h2>
+            <h2 className="font-semibold">Custom Fields</h2>
             <p className="text-sm text-muted-foreground">
-              Optional key-value data saved to `extra_fields`.
+              These fields are configured per organization.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={addExtraField}
-            className="rounded-md border border-input px-3 py-2 text-sm hover:bg-accent transition"
-          >
-            Add Field
-          </button>
-        </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {extraFieldsSchema.map((field) => {
+              const inputName = `extra_${field.key}`;
 
-        <div className="space-y-3">
-          {extraFields.map((field) => (
-            <div key={field.id} className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
-              <input
-                value={field.key}
-                onChange={(event) =>
-                  updateExtraField(field.id, "key", event.target.value)
-                }
-                placeholder="Field name"
-                className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-              />
-              <input
-                value={field.value}
-                onChange={(event) =>
-                  updateExtraField(field.id, "value", event.target.value)
-                }
-                placeholder="Field value"
-                className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-              />
-              <button
-                type="button"
-                onClick={() => removeExtraField(field.id)}
-                className="rounded-md border border-input px-3 py-2 text-sm hover:bg-accent transition"
-              >
-                Remove
-              </button>
-            </div>
-          ))}
+              if (field.field_type === "textarea") {
+                return (
+                  <label key={field.key} className="space-y-1 md:col-span-2">
+                    <span className="text-sm font-medium">{field.label}</span>
+                    <textarea
+                      name={inputName}
+                      required={field.required}
+                      rows={3}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    />
+                  </label>
+                );
+              }
+
+              if (field.field_type === "select") {
+                return (
+                  <label key={field.key} className="space-y-1">
+                    <span className="text-sm font-medium">{field.label}</span>
+                    <select
+                      name={inputName}
+                      required={field.required}
+                      defaultValue=""
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    >
+                      <option value="">Select an option</option>
+                      {field.options.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                );
+              }
+
+              return (
+                <label key={field.key} className="space-y-1">
+                  <span className="text-sm font-medium">{field.label}</span>
+                  <input
+                    name={inputName}
+                    required={field.required}
+                    type={
+                      field.field_type === "number"
+                        ? "number"
+                        : field.field_type === "date"
+                          ? "date"
+                          : "text"
+                    }
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  />
+                </label>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <div className="flex justify-end">
         <button

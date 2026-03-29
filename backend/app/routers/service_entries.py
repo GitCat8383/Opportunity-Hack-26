@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.middleware.auth import get_current_user, require_role
 from app.models.client import Client
+from app.models.org_config import OrgConfig
 from app.models.service_entry import ServiceEntry
 from app.schemas.service_entry import (
     ServiceEntryCreate,
@@ -61,6 +62,16 @@ async def create_service_entry(
     )
     if client_exists.scalar_one_or_none() is None:
         raise HTTPException(status_code=404, detail="Client not found")
+
+    config_result = await db.execute(select(OrgConfig).where(OrgConfig.org_id == org_id))
+    org_config = config_result.scalar_one_or_none()
+    allowed_service_types = (
+        org_config.service_types
+        if org_config and isinstance(org_config.service_types, list)
+        else []
+    )
+    if allowed_service_types and data.service_type not in allowed_service_types:
+        raise HTTPException(status_code=400, detail="Invalid service type")
 
     entry = ServiceEntry(
         org_id=org_id,
