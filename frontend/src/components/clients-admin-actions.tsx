@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChangeEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Download, Settings2, Upload } from "lucide-react";
 
 import { API_BASE, ApiError, apiFetch } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
@@ -130,8 +131,17 @@ export function ClientsAdminActions() {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
+    <section className="space-y-4 rounded-[1.75rem] border border-slate-200 bg-white/80 p-6 shadow-lg shadow-slate-200/60 backdrop-blur-sm">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">
+            Admin Data Controls
+          </h2>
+          <p className="text-sm text-slate-600">
+            Import, export, and tune the client schema for your organization.
+          </p>
+        </div>
+
         <input
           ref={fileInputRef}
           type="file"
@@ -143,44 +153,47 @@ export function ClientsAdminActions() {
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isImporting}
-          className="rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent disabled:opacity-50 transition"
+          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
         >
+          <Upload size={16} />
           {isImporting ? "Importing..." : "Import CSV"}
         </button>
         <button
           type="button"
           onClick={handleExport}
           disabled={isExporting}
-          className="rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent disabled:opacity-50 transition"
+          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
         >
+          <Download size={16} />
           {isExporting ? "Exporting..." : "Export CSV"}
         </button>
         <Link
           href="/clients/config"
-          className="rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent transition"
+          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
         >
+          <Settings2 size={16} />
           Manage Custom Fields
         </Link>
       </div>
 
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-slate-500">
         CSV import accepts core client columns plus any configured custom-field
         keys or labels.
       </p>
 
       {error ? (
-        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {error}
         </div>
       ) : null}
 
       {importResult ? (
-        <div className="rounded-lg border bg-card p-4">
-          <p className="text-sm font-medium">
+        <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5">
+          <p className="text-sm font-medium text-slate-900">
             Imported {importResult.inserted_count} client
             {importResult.inserted_count === 1 ? "" : "s"}.
           </p>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-slate-600">
             {importResult.failed_count} row
             {importResult.failed_count === 1 ? "" : "s"} failed validation.
           </p>
@@ -188,11 +201,14 @@ export function ClientsAdminActions() {
           {importResult.errors.length > 0 ? (
             <div className="mt-4 space-y-3">
               {importResult.errors.map((rowError) => (
-                <div key={rowError.row_number} className="rounded-md border p-3">
-                  <p className="text-sm font-medium">
+                <div
+                  key={rowError.row_number}
+                  className="rounded-2xl border border-slate-200 bg-white p-4"
+                >
+                  <p className="text-sm font-medium text-slate-900">
                     Row {rowError.row_number}
                   </p>
-                  <p className="mt-1 text-sm text-destructive">
+                  <p className="mt-1 text-sm text-red-700">
                     {rowError.errors.join(" ")}
                   </p>
                 </div>
@@ -201,6 +217,6 @@ export function ClientsAdminActions() {
           ) : null}
         </div>
       ) : null}
-    </div>
+    </section>
   );
 }

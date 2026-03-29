@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Search, Sparkles } from "lucide-react";
 
 import { apiFetch, ApiError } from "@/lib/api";
 import { formatDate } from "@/lib/dates";
@@ -109,59 +110,74 @@ export function SemanticSearchPanel({ enabled }: SemanticSearchPanelProps) {
   }
 
   return (
-    <section className="rounded-lg border bg-card p-4 space-y-4">
+    <section className="space-y-4 rounded-[1.75rem] border border-slate-200 bg-white/80 p-6 shadow-lg shadow-slate-200/60 backdrop-blur-sm">
       <div>
-        <h2 className="font-semibold">Semantic Search</h2>
-        <p className="text-sm text-muted-foreground">
+        <div className="inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-purple-700">
+          <Sparkles size={14} />
+          AI Search
+        </div>
+        <h2 className="mt-4 text-lg font-semibold text-slate-900">
+          Semantic Search
+        </h2>
+        <p className="text-sm text-slate-600">
           Search across case notes using natural language, not exact keywords.
         </p>
       </div>
 
       <form className="flex flex-col gap-3 md:flex-row" onSubmit={handleSubmit}>
-        <input
-          type="text"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Example: clients struggling with rent or eviction risk"
-          className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
-        />
+        <label className="relative flex-1">
+          <Search
+            size={18}
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+          <input
+            type="text"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Example: clients struggling with rent or eviction risk"
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-12 pr-4 text-sm text-slate-900 outline-none transition focus:border-purple-400 focus:bg-white focus:ring-2 focus:ring-purple-100"
+          />
+        </label>
         <button
           type="submit"
           disabled={loading}
-          className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent disabled:opacity-50 transition"
+          className="rounded-2xl bg-purple-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-purple-700 disabled:opacity-50"
         >
           {loading ? "Searching..." : "Search Notes"}
         </button>
       </form>
 
       {error ? (
-        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {error}
         </div>
       ) : null}
 
       <div className="space-y-3">
         {searched && results.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-slate-600">
             No similar service entries were found for that query.
           </p>
         ) : null}
 
         {results.map((result) => (
-          <div key={result.service_entry_id} className="rounded-md border p-4 space-y-2">
+          <div
+            key={result.service_entry_id}
+            className="space-y-2 rounded-3xl border border-slate-200 bg-slate-50/80 p-4"
+          >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <Link
                 href={`/clients/${result.client_id}`}
-                className="font-medium hover:underline"
+                className="font-medium text-slate-900 hover:underline"
               >
                 {result.client_name}
               </Link>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-slate-500">
                 {result.service_type} · {formatDate(result.service_date)} ·{" "}
                 {(result.similarity * 100).toFixed(0)}% match
               </p>
             </div>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+            <p className="whitespace-pre-wrap text-sm text-slate-600">
               {result.content_snippet}
             </p>
           </div>

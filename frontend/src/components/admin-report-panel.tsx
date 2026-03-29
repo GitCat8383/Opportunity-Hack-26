@@ -236,11 +236,13 @@ export function AdminReportPanel() {
   }
 
   return (
-    <section className="rounded-lg border bg-card p-5 space-y-5">
+    <section className="space-y-5 rounded-[1.75rem] border border-slate-200 bg-white/80 p-6 shadow-lg shadow-slate-200/60 backdrop-blur-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="font-semibold">Funder Reports</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-lg font-semibold text-slate-900">
+            Funder Reports
+          </h2>
+          <p className="text-sm text-slate-600">
             Generate a quarter-based report from live case data, stream the narrative,
             and export it to DOCX.
           </p>
@@ -250,14 +252,14 @@ export function AdminReportPanel() {
           <button
             type="button"
             onClick={() => setDateRange(getQuarterRange())}
-            className="rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent transition"
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
           >
             Current Quarter
           </button>
           <button
             type="button"
             onClick={() => setDateRange(getPreviousQuarterRange())}
-            className="rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent transition"
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
           >
             Previous Quarter
           </button>
@@ -266,32 +268,32 @@ export function AdminReportPanel() {
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_auto_auto]">
         <label className="space-y-1">
-          <span className="text-sm font-medium">Start date</span>
+          <span className="text-sm font-medium text-slate-700">Start date</span>
           <input
             type="date"
             value={dateRange.start}
             onChange={(event) =>
               setDateRange((current) => ({ ...current, start: event.target.value }))
             }
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900"
           />
         </label>
         <label className="space-y-1">
-          <span className="text-sm font-medium">End date</span>
+          <span className="text-sm font-medium text-slate-700">End date</span>
           <input
             type="date"
             value={dateRange.end}
             onChange={(event) =>
               setDateRange((current) => ({ ...current, end: event.target.value }))
             }
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900"
           />
         </label>
         <button
           type="button"
           onClick={handleGenerateReport}
           disabled={loading || exporting}
-          className="self-end rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition"
+          className="self-end rounded-xl bg-purple-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-purple-700 disabled:opacity-50"
         >
           {loading ? "Generating..." : "Generate Report"}
         </button>
@@ -299,21 +301,21 @@ export function AdminReportPanel() {
           type="button"
           onClick={handleExportDocx}
           disabled={loading || exporting || !reportText.trim() || !meta}
-          className="self-end rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent disabled:opacity-50 transition"
+          className="self-end rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
         >
           {exporting ? "Exporting..." : "Export DOCX"}
         </button>
       </div>
 
       {error ? (
-        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {error}
         </div>
       ) : null}
 
       {meta ? (
-        <div className="rounded-md border bg-background p-3 text-sm text-muted-foreground">
-          <p className="font-medium text-foreground">{meta.title}</p>
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-600">
+          <p className="font-medium text-slate-900">{meta.title}</p>
           <p>
             Reporting period: {meta.start_date} to {meta.end_date}
           </p>
@@ -321,26 +323,28 @@ export function AdminReportPanel() {
       ) : null}
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <div className="rounded-lg border bg-background p-4 space-y-3">
+        <div className="space-y-3 rounded-3xl border border-slate-200 bg-slate-50/70 p-4">
           <div>
-            <h3 className="font-medium">Before: Raw CSV Dump</h3>
-            <p className="text-sm text-muted-foreground">
+            <h3 className="font-medium text-slate-900">Before: Raw CSV Dump</h3>
+            <p className="text-sm text-slate-600">
               This is the raw structured export used as the report input.
             </p>
           </div>
-          <pre className="max-h-[32rem] overflow-auto whitespace-pre-wrap rounded-md bg-muted/40 p-3 text-xs">
+          <pre className="max-h-[32rem] overflow-auto whitespace-pre-wrap rounded-2xl bg-white p-3 text-xs text-slate-700">
             {meta?.raw_csv ?? "Generate a report to inspect the raw data export."}
           </pre>
         </div>
 
-        <div className="rounded-lg border bg-background p-4 space-y-3">
+        <div className="space-y-3 rounded-3xl border border-slate-200 bg-slate-50/70 p-4">
           <div>
-            <h3 className="font-medium">After: Polished Narrative Report</h3>
-            <p className="text-sm text-muted-foreground">
+            <h3 className="font-medium text-slate-900">
+              After: Polished Narrative Report
+            </h3>
+            <p className="text-sm text-slate-600">
               The report streams in as Gemini turns the aggregated data into a funder-ready narrative.
             </p>
           </div>
-          <div className="max-h-[32rem] overflow-auto whitespace-pre-wrap rounded-md bg-muted/40 p-3 text-sm leading-6">
+          <div className="max-h-[32rem] overflow-auto whitespace-pre-wrap rounded-2xl bg-white p-3 text-sm leading-6 text-slate-700">
             {reportText || "Generate a report to stream the narrative here."}
           </div>
         </div>

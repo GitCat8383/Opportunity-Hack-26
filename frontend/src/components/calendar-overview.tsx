@@ -103,59 +103,64 @@ export function CalendarOverview({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border bg-card p-4">
+      <div className="rounded-[1.75rem] border border-slate-200 bg-white/80 p-5 shadow-lg shadow-slate-200/60 backdrop-blur-sm">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="font-semibold">Upcoming Appointment Reminders</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className="font-semibold text-slate-900">
+              Upcoming Appointment Reminders
+            </h2>
+            <p className="text-sm text-slate-600">
               Auto-refreshing every minute to catch new or rescheduled visits.
             </p>
           </div>
-          <p className="text-sm font-medium">
+          <p className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-amber-700">
             {reminderAppointments.length} due in the next 24 hours
           </p>
         </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[340px_1fr]">
-        <section className="rounded-lg border bg-card p-5">
+        <section className="rounded-[1.75rem] border border-slate-200 bg-white/80 p-6 shadow-lg shadow-slate-200/60 backdrop-blur-sm">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-semibold">Today</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className="font-semibold text-slate-900">Today</h2>
+            <p className="text-sm text-slate-600">
               {todayAppointments.length} appointment
               {todayAppointments.length === 1 ? "" : "s"}
             </p>
           </div>
 
           {todayAppointments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-slate-600">
               No appointments scheduled for today.
             </p>
           ) : (
             <div className="space-y-3">
               {todayAppointments.map((appointment) => (
-                <article key={appointment.id} className="rounded-md border p-4">
+                <article
+                  key={appointment.id}
+                  className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4"
+                >
                   <div className="flex items-center justify-between gap-3">
-                    <p className="font-medium">
+                    <p className="font-medium text-slate-900">
                       {clientNames.get(appointment.client_id) ?? "Unknown client"}
                     </p>
                     <span
-                      className={`rounded-full px-2 py-1 text-xs font-medium ${statusClasses(appointment.status)}`}
+                      className={`rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.12em] ${statusClasses(appointment.status)}`}
                     >
                       {appointment.status.replace("_", " ")}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm text-muted-foreground">
+                  <p className="mt-2 text-sm text-slate-600">
                     {formatDateTime(appointment.scheduled_at)}
                   </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
+                  <p className="mt-1 text-sm text-slate-600">
                     {appointment.service_type || "General"} ·{" "}
                     {appointment.duration_minutes} min
                   </p>
                   <div className="mt-3">
                     <Link
                       href={`/clients/${appointment.client_id}`}
-                      className="text-sm font-medium hover:underline"
+                      className="text-sm font-medium text-slate-900 hover:underline"
                     >
                       Open client profile
                     </Link>
@@ -166,10 +171,10 @@ export function CalendarOverview({
           )}
         </section>
 
-        <section className="rounded-lg border bg-card p-5">
+        <section className="rounded-[1.75rem] border border-slate-200 bg-white/80 p-6 shadow-lg shadow-slate-200/60 backdrop-blur-sm">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-semibold">This Week</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className="font-semibold text-slate-900">This Week</h2>
+            <p className="text-sm text-slate-600">
               {weeklyAppointments.length} upcoming appointment
               {weeklyAppointments.length === 1 ? "" : "s"}
             </p>
@@ -187,32 +192,40 @@ export function CalendarOverview({
               });
 
               return (
-                <div key={day.toISOString()} className="rounded-md border p-4">
-                  <p className="font-medium">{formatDayLabel(day)}</p>
+                <div
+                  key={day.toISOString()}
+                  className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4"
+                >
+                  <p className="font-medium text-slate-900">
+                    {formatDayLabel(day)}
+                  </p>
                   <div className="mt-3 space-y-3">
                     {items.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-slate-500">
                         No appointments.
                       </p>
                     ) : (
                       items.map((appointment) => (
-                        <article key={appointment.id} className="rounded-md bg-muted/40 p-3">
+                        <article
+                          key={appointment.id}
+                          className="rounded-2xl border border-slate-200 bg-white p-3"
+                        >
                           <div className="flex items-start justify-between gap-3">
                             <div>
-                              <p className="text-sm font-medium">
+                              <p className="text-sm font-medium text-slate-900">
                                 {clientNames.get(appointment.client_id) ?? "Unknown client"}
                               </p>
-                              <p className="mt-1 text-xs text-muted-foreground">
+                              <p className="mt-1 text-xs text-slate-500">
                                 {formatDateTime(appointment.scheduled_at)}
                               </p>
                             </div>
                             <span
-                              className={`rounded-full px-2 py-1 text-[11px] font-medium ${statusClasses(appointment.status)}`}
+                              className={`rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] ${statusClasses(appointment.status)}`}
                             >
                               {appointment.status.replace("_", " ")}
                             </span>
                           </div>
-                          <p className="mt-2 text-xs text-muted-foreground">
+                          <p className="mt-2 text-xs text-slate-500">
                             {appointment.service_type || "General"} ·{" "}
                             {appointment.duration_minutes} min
                           </p>

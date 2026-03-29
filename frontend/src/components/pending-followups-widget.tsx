@@ -88,43 +88,58 @@ export function PendingFollowupsWidget({
   );
 
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-semibold">Pending Follow-Ups</h2>
-        <p className="text-sm text-muted-foreground">
+    <section className="rounded-[1.75rem] border border-slate-200 bg-white/80 p-6 shadow-lg shadow-slate-200/60 backdrop-blur-sm">
+      <div className="mb-5 flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">
+            Pending Follow-Ups
+          </h2>
+          <p className="text-sm text-slate-600">
+            Prioritized live queue for unresolved client actions.
+          </p>
+        </div>
+        <p className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">
           Live updates enabled
         </p>
       </div>
 
       {followUps.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-slate-600">
           No pending follow-ups right now.
         </p>
       ) : (
         <div className="space-y-3">
           {followUps.map((followUp) => (
-            <article key={followUp.id} className="rounded-md border p-3">
+            <article
+              key={followUp.id}
+              className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 transition hover:border-slate-300 hover:bg-white"
+            >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-medium">{followUp.description}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Due: {followUp.due_date ? formatDate(followUp.due_date) : "Unscheduled"}
+                  <p className="font-medium text-slate-900">
+                    {followUp.description}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Due:{" "}
+                    {followUp.due_date
+                      ? formatDate(followUp.due_date)
+                      : "Unscheduled"}
                   </p>
                 </div>
                 <span
-                  className={`rounded-full px-2 py-1 text-xs font-medium ${urgencyClasses(followUp.urgency)}`}
+                  className={`rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.12em] ${urgencyClasses(followUp.urgency)}`}
                 >
                   {followUp.urgency}
                 </span>
               </div>
 
               <div className="mt-3 flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">
+                <span className="text-slate-500">
                   {followUp.category ?? "general"}
                 </span>
                 <Link
                   href={`/clients/${followUp.client_id}`}
-                  className="font-medium hover:underline"
+                  className="font-medium text-slate-900 hover:underline"
                 >
                   Open client
                 </Link>
@@ -133,6 +148,6 @@ export function PendingFollowupsWidget({
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }

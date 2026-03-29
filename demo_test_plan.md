@@ -203,53 +203,109 @@ These are beyond the original P0/P1 minimums, but should be tested because they 
 
 - [ ] Log in as `staff`
 - [ ] Open `/clients/new`
+- [ ] Confirm the AI intake controls are visible for `staff`
 - [ ] Click `Scan Intake Form`
-- [ ] Upload a real image or use a demo intake image
+- [ ] Upload a real intake-form photo or use one of the demo intake images
+- [ ] Wait for the AI extraction to finish
 - [ ] Confirm fields are prefilled
+- [ ] Confirm at minimum these fields are extracted when present in the image:
+  - first name
+  - last name
+  - date of birth
+  - phone
+  - email
+  - address
+- [ ] Confirm no page crash occurs if some fields are unreadable
 - [ ] Confirm you can still edit the fields before saving
+- [ ] Save the client
+- [ ] Open the created client profile
+- [ ] Confirm the saved demographics match the reviewed intake data
 
 ### AI-2 Voice Note Workflow
 
+- [ ] Log in as `staff`
+- [ ] Open an existing client profile
 - [ ] Open a service entry form
+- [ ] Confirm the voice-note / AI note tools are visible for `staff`
 - [ ] Record a voice note
+- [ ] Speak a short realistic note such as:
+  - service provided
+  - client concern
+  - next step or follow-up
 - [ ] Confirm transcription succeeds
 - [ ] Confirm structured draft fields are generated
+- [ ] Confirm the note content is mapped into the form rather than requiring manual re-entry
 - [ ] Confirm staff can edit before saving
+- [ ] Save the service entry
+- [ ] Return to the client profile
+- [ ] Confirm the saved service entry appears in history
+- [ ] If the note implied a next step, confirm a follow-up is created when applicable
 
 ### AI-3 Semantic Search
 
+- [ ] Log in as `staff` or `admin`
 - [ ] Open `/clients`
+- [ ] Confirm the semantic search panel is visible
 - [ ] Search a natural-language query, not just an exact keyword
-- [ ] Confirm similar case notes are returned
+- [ ] Use a query such as:
+  - `clients struggling with rent`
+  - `people needing housing follow-up`
+  - `clients reporting trouble sleeping`
+- [ ] Confirm the search completes without error
+- [ ] Confirm similar case notes are returned when matching data exists
+- [ ] Confirm each result shows:
+  - client name
+  - service type
+  - service date
+  - similarity score
+  - note snippet
 - [ ] Confirm results link back to the correct client
+- [ ] Confirm a no-match search returns a clean empty-state message, not a crash
 
 ### AI-4 Client Summary
 
-- [ ] Open a client profile
+- [ ] Log in as `staff` or `admin`
+- [ ] Open a client profile with multiple service entries
 - [ ] Click `Generate Summary`
+- [ ] Confirm the request starts without page failure
 - [ ] Confirm the summary is created as a draft
+- [ ] Confirm the draft includes a useful handoff-style overview, not raw copied notes
 - [ ] Confirm it is editable before saving
+- [ ] Save the summary
+- [ ] Refresh the page
+- [ ] Confirm the saved summary remains visible on the client profile
 
 ### AI-5 Funder Report
 
 - [ ] Log in as `admin`
 - [ ] Open `/dashboard`
+- [ ] Confirm the funder report panel is visible
+- [ ] Select a reporting window
 - [ ] Generate a funder report
+- [ ] Confirm the request begins without error
 - [ ] Confirm report text streams into the UI
+- [ ] Confirm the metadata block shows the reporting period
+- [ ] Confirm the raw CSV section is populated
+- [ ] Confirm the narrative report is polished and readable
 - [ ] Export the report to DOCX
 - [ ] Confirm the document downloads successfully
 
 ### AI-6 Translation
 
+- [ ] Log in as `staff` or `admin`
 - [ ] Open client intake form
-- [ ] Switch form language
-- [ ] Confirm labels translate
+- [ ] Switch form language from English to Spanish
+- [ ] Confirm visible labels and helper text translate
+- [ ] Switch back to English
+- [ ] Confirm labels return correctly
 - [ ] Open service entry form
 - [ ] Switch form language
-- [ ] Confirm labels translate
-- [ ] Open a client note with translatable content
+- [ ] Confirm labels translate there as well
+- [ ] Open a client profile with note content in history
 - [ ] Click `Translate Note`
 - [ ] Confirm inline translation appears
+- [ ] Confirm the original note is not lost or overwritten
+- [ ] If budget controls are active, confirm cached translations still load normally
 
 ## Role Permission Demo Checks
 

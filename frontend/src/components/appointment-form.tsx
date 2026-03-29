@@ -72,19 +72,19 @@ export function AppointmentForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error ? (
-        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {error}
         </div>
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-1 md:col-span-2">
-          <span className="text-sm font-medium">Client</span>
+          <span className="text-sm font-medium text-slate-700">Client</span>
           <select
             name="client_id"
             required
             defaultValue={defaultClientId ?? ""}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100"
           >
             <option value="">Select a client</option>
             {clients.map((client) => (
@@ -96,21 +96,21 @@ export function AppointmentForm({
         </label>
 
         <label className="space-y-1">
-          <span className="text-sm font-medium">Date & Time</span>
+          <span className="text-sm font-medium text-slate-700">Date & Time</span>
           <input
             name="scheduled_at"
             type="datetime-local"
             required
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100"
           />
         </label>
 
         <label className="space-y-1">
-          <span className="text-sm font-medium">Duration</span>
+          <span className="text-sm font-medium text-slate-700">Duration</span>
           <select
             name="duration_minutes"
             defaultValue="60"
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100"
           >
             {[30, 45, 60, 90, 120].map((minutes) => (
               <option key={minutes} value={minutes}>
@@ -121,11 +121,11 @@ export function AppointmentForm({
         </label>
 
         <label className="space-y-1">
-          <span className="text-sm font-medium">Service Type</span>
+          <span className="text-sm font-medium text-slate-700">Service Type</span>
           <select
             name="service_type"
             defaultValue={serviceTypes[0] ?? ""}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100"
           >
             {serviceTypes.map((serviceType) => (
               <option key={serviceType} value={serviceType}>
@@ -137,12 +137,12 @@ export function AppointmentForm({
       </div>
 
       <label className="block space-y-1">
-        <span className="text-sm font-medium">Notes</span>
+        <span className="text-sm font-medium text-slate-700">Notes</span>
         <textarea
           name="notes"
           rows={4}
           placeholder="Optional scheduling notes, preparation reminders, or context."
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100"
         />
       </label>
 
@@ -150,7 +150,7 @@ export function AppointmentForm({
         <button
           type="submit"
           disabled={loading}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition"
+          className="rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
         >
           {loading ? "Scheduling..." : "Schedule Appointment"}
         </button>
