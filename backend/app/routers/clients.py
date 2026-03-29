@@ -85,11 +85,11 @@ async def list_clients(
     current_user: dict = Depends(get_current_user),
 ):
     org_id = current_user["org_id"]
-    base_query = select(Client.id).where(Client.org_id == org_id)
+    filters = [Client.org_id == org_id]
 
     if search:
         search_term = f"%{search}%"
-        base_query = base_query.where(
+        filters.append(
             or_(
                 Client.first_name.ilike(search_term),
                 Client.last_name.ilike(search_term),
@@ -97,36 +97,55 @@ async def list_clients(
         )
 
     if status_filter:
-        base_query = base_query.where(Client.status == status_filter)
+        filters.append(Client.status == status_filter)
 
-    count_query = select(func.count()).select_from(base_query.subquery())
+    count_query = select(func.count()).select_from(Client).where(*filters)
     total = (await db.execute(count_query)).scalar()
 
-    last_service_date = func.max(ServiceEntry.service_date).label("last_service_date")
-    query = (
-        select(Client, last_service_date)
-        .outerjoin(
-            ServiceEntry,
-            (ServiceEntry.client_id == Client.id) & (ServiceEntry.org_id == Client.org_id),
-        )
-        .where(Client.id.in_(base_query))
-        .group_by(Client.id)
+    client_query = (
+        select(Client)
+        .where(*filters)
         .order_by(Client.last_name, Client.first_name)
         .offset((page - 1) * per_page)
         .limit(per_page)
     )
-    result = await db.execute(query)
-    rows = result.all()
+    result = await db.execute(client_query)
+    clients = result.scalars().all()
+
+    if not clients:
+        return ClientListResponse(
+            clients=[],
+            total=total,
+            page=page,
+            per_page=per_page,
+        )
+
+    client_ids = [client.id for client in clients]
+    last_service_dates_result = await db.execute(
+        select(
+            ServiceEntry.client_id,
+            func.max(ServiceEntry.service_date).label("last_service_date"),
+        )
+        .where(
+            ServiceEntry.org_id == org_id,
+            ServiceEntry.client_id.in_(client_ids),
+        )
+        .group_by(ServiceEntry.client_id)
+    )
+    last_service_dates = {
+        client_id: last_service_date
+        for client_id, last_service_date in last_service_dates_result.all()
+    }
 
     return ClientListResponse(
         clients=[
             ClientListItem.model_validate(
                 {
                     **ClientResponse.model_validate(client).model_dump(),
-                    "last_service_date": service_date,
+                    "last_service_date": last_service_dates.get(client.id),
                 }
             )
-            for client, service_date in rows
+            for client in clients
         ],
         total=total,
         page=page,
