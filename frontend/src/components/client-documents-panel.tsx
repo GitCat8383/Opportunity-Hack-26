@@ -43,7 +43,8 @@ export function ClientDocumentsPanel({
     setUploading(true);
     setError(null);
 
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     const file = formData.get("file");
 
     if (!(file instanceof File) || file.size === 0) {
@@ -75,7 +76,7 @@ export function ClientDocumentsPanel({
       );
 
       setDocuments((current) => [document, ...current]);
-      event.currentTarget.reset();
+      form.reset();
       router.refresh();
     } catch (err) {
       setError(
