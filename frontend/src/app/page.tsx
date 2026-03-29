@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -10,7 +11,18 @@ import {
   Users,
 } from "lucide-react";
 
-export default function Home() {
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+
+export default async function Home() {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (session) {
+    redirect("/dashboard");
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-purple-200">
       <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur-md">

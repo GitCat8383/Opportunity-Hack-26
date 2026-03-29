@@ -141,6 +141,9 @@ CREATE TABLE appointments (
     status TEXT DEFAULT 'scheduled'
         CHECK (status IN ('scheduled', 'completed', 'cancelled', 'no_show')),
     notes TEXT,
+    reminder_sent_at TIMESTAMPTZ,
+    reminder_sent_for_scheduled_at TIMESTAMPTZ,
+    reminder_error TEXT,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );

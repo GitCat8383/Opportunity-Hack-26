@@ -44,3 +44,10 @@ class AppointmentListResponse(BaseModel):
     total: int
     page: int
     per_page: int
+
+
+class AppointmentReminderRunResponse(BaseModel):
+    sent_count: int
+    skipped_count: int
+    failed_count: int
+    dry_run: bool = False

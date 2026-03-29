@@ -24,6 +24,13 @@ class Appointment(Base):
     service_type: Mapped[str | None] = mapped_column(String)
     status: Mapped[str] = mapped_column(String, default="scheduled")
     notes: Mapped[str | None] = mapped_column(Text)
+    reminder_sent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+    reminder_sent_for_scheduled_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+    reminder_error: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

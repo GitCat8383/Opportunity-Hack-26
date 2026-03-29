@@ -22,6 +22,15 @@ class Settings(BaseSettings):
     # AI Keys
     gemini_api_key: str
 
+    # Email / notifications
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_username: str | None = None
+    smtp_password: str | None = None
+    smtp_from_email: str | None = None
+    smtp_from_name: str = "CareFlow"
+    appointment_reminder_window_days: int = 3
+
     # CORS
     cors_origins: list[str] = ["http://localhost:3000"]
 

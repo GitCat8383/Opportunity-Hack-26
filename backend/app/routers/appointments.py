@@ -13,9 +13,11 @@ from app.models.org_config import OrgConfig
 from app.schemas.appointment import (
     AppointmentCreate,
     AppointmentListResponse,
+    AppointmentReminderRunResponse,
     AppointmentResponse,
     AppointmentUpdate,
 )
+from app.services.appointment_reminders import send_appointment_reminders
 
 router = APIRouter(prefix="/appointments", tags=["appointments"])
 
@@ -145,3 +147,22 @@ async def update_appointment(
     await db.flush()
     await db.refresh(appointment)
     return AppointmentResponse.model_validate(appointment)
+
+
+@router.post(
+    "/send-reminders",
+    response_model=AppointmentReminderRunResponse,
+)
+async def trigger_appointment_reminders(
+    dry_run: bool = Query(False),
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(require_role(["admin"])),
+):
+    del current_user
+    reminder_result = await send_appointment_reminders(db, dry_run=dry_run)
+    return AppointmentReminderRunResponse(
+        sent_count=reminder_result.sent_count,
+        skipped_count=reminder_result.skipped_count,
+        failed_count=reminder_result.failed_count,
+        dry_run=dry_run,
+    )

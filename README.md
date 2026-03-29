@@ -194,6 +194,59 @@ After both apps are deployed:
    - funder reports
 7. Confirm document upload works using the `client-documents` bucket.
 
+### Appointment Reminder Emails (Gmail)
+
+This project can send appointment reminder emails to clients when a scheduled appointment is within the next 3 days.
+
+Setup:
+
+1. In Gmail, enable 2-Step Verification for the sending account.
+2. Create a Gmail App Password.
+3. Add these backend environment variables:
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=your-gmail-address@gmail.com
+SMTP_PASSWORD=your-gmail-app-password
+SMTP_FROM_EMAIL=your-gmail-address@gmail.com
+SMTP_FROM_NAME=CareFlow
+APPOINTMENT_REMINDER_WINDOW_DAYS=3
+```
+
+4. Apply the schema update in `database/appointment_reminder_migration.sql` if your database already exists.
+
+Manual run options:
+
+- Admin API trigger:
+  - `POST /api/v1/appointments/send-reminders`
+- CLI script:
+
+```bash
+cd backend
+python send_appointment_reminders.py
+```
+
+Recommended production setup on Render:
+
+- Create a separate Render Cron Job
+- Root Directory: `backend`
+- Build Command: `pip install -r requirements.txt`
+- Start Command:
+
+```bash
+python send_appointment_reminders.py
+```
+
+- Reuse the same backend environment variables as the main API service
+
+The reminder job only sends emails for:
+
+- appointments with `status = scheduled`
+- appointments within the next `APPOINTMENT_REMINDER_WINDOW_DAYS`
+- clients who have an email address
+- appointments that have not already been reminded for the current `scheduled_at` value
+
 ## Environment Variables
 
 ### Backend (`backend/.env`)
@@ -205,6 +258,13 @@ After both apps are deployed:
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-side only) |
 | `DATABASE_URL` | Direct PostgreSQL connection string |
 | `GEMINI_API_KEY` | Google Gemini API key |
+| `SMTP_HOST` | SMTP host for outbound email, e.g. `smtp.gmail.com` |
+| `SMTP_PORT` | SMTP port, usually `587` for Gmail |
+| `SMTP_USERNAME` | SMTP login email |
+| `SMTP_PASSWORD` | SMTP password or Gmail App Password |
+| `SMTP_FROM_EMAIL` | Sender email address shown to clients |
+| `SMTP_FROM_NAME` | Sender display name for reminder emails |
+| `APPOINTMENT_REMINDER_WINDOW_DAYS` | Number of days ahead to send reminders for |
 | `CORS_ORIGINS` | Allowed frontend origins. Use a comma-separated list or JSON array. Example: `http://localhost:3000,https://your-frontend.vercel.app` |
 | `DEBUG` | FastAPI debug flag (`true` locally, `false` in production) |
 
