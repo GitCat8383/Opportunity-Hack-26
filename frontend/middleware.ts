@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import type { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/clients", "/calendar"];
+const PROTECTED_PREFIXES = ["/dashboard", "/clients", "/calendar", "/reports", "/audit-log"];
 const AUTH_ROUTES = new Set(["/login"]);
 const VALID_ROLES = new Set(["volunteer", "staff", "admin"]);
 type CookieToSet = {
@@ -68,11 +68,7 @@ export async function middleware(request: NextRequest) {
     .eq("id", user.id)
     .maybeSingle();
 
-  const resolvedRole =
-    profile?.role ??
-    (typeof user.user_metadata?.role === "string"
-      ? user.user_metadata.role
-      : null);
+  const resolvedRole = profile?.role;
 
   if (!resolvedRole || !VALID_ROLES.has(resolvedRole)) {
     return NextResponse.redirect(new URL("/login", request.url));

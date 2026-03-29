@@ -11,9 +11,9 @@ import type {
 } from "@/types";
 
 type CalendarPageProps = {
-  searchParams?: {
+  searchParams: Promise<{
     client_id?: string;
-  };
+  }>;
 };
 
 const DEFAULT_SERVICE_TYPES = [
@@ -31,6 +31,7 @@ export default async function CalendarPage({
   searchParams,
 }: CalendarPageProps) {
   const { profile, session } = await requireAuthenticatedProfile();
+  const resolvedSearchParams = await searchParams;
   const dateFrom = new Date();
   dateFrom.setHours(0, 0, 0, 0);
   const dateTo = addDays(dateFrom, 6);
@@ -79,7 +80,7 @@ export default async function CalendarPage({
           <AppointmentForm
             clients={clients.clients}
             serviceTypes={serviceTypes}
-            defaultClientId={searchParams?.client_id}
+            defaultClientId={resolvedSearchParams?.client_id}
           />
         </section>
       ) : null}

@@ -9,7 +9,6 @@ alembic==1.14.1
 
 # Supabase
 supabase==2.11.0
-python-jose[cryptography]==3.3.0
 
 # AI
 google-genai==1.14.0

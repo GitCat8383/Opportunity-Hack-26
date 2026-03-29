@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { CustomFieldDefinition, OrgConfig } from "@/types";
 
 type CustomFieldsManagerProps = {
-  initialSchema: CustomFieldDefinition[];
+  initialConfig: OrgConfig;
 };
 
 type FieldType = CustomFieldDefinition["field_type"];
@@ -64,10 +64,15 @@ function validateSchema(schema: CustomFieldDefinition[]) {
 }
 
 export function CustomFieldsManager({
-  initialSchema,
+  initialConfig,
 }: CustomFieldsManagerProps) {
   const supabase = createClient();
-  const [schema, setSchema] = useState<CustomFieldDefinition[]>(initialSchema);
+  const [schema, setSchema] = useState<CustomFieldDefinition[]>(
+    initialConfig.extra_fields_schema
+  );
+  const [aiBudgetCents, setAiBudgetCents] = useState<string>(
+    String(initialConfig.ai_monthly_budget_cents)
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -115,6 +120,13 @@ export function CustomFieldsManager({
       return;
     }
 
+    const parsedBudgetCents = Number(aiBudgetCents);
+    if (!Number.isFinite(parsedBudgetCents) || parsedBudgetCents < 0) {
+      setError("AI monthly budget must be zero or greater.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const {
         data: { session },
@@ -130,12 +142,16 @@ export function CustomFieldsManager({
         "/org-config",
         {
           method: "PATCH",
-          body: JSON.stringify({ extra_fields_schema: normalizedSchema }),
+          body: JSON.stringify({
+            extra_fields_schema: normalizedSchema,
+            ai_monthly_budget_cents: Math.round(parsedBudgetCents),
+          }),
         },
         session.access_token
       );
 
       setSchema(updatedConfig.extra_fields_schema);
+      setAiBudgetCents(String(updatedConfig.ai_monthly_budget_cents));
       setSuccessMessage("Custom fields saved.");
     } catch (err) {
       setError(
@@ -154,6 +170,27 @@ export function CustomFieldsManager({
           These fields render automatically on the client registration form and
           appear on the client profile after save.
         </p>
+      </div>
+
+      <div className="rounded-lg border bg-card p-5 space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold">AI Monthly Budget</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Set the monthly AI cap for this organization in cents. Example:
+            `5000` = $50.00.
+          </p>
+        </div>
+        <label className="block max-w-xs space-y-1">
+          <span className="text-sm font-medium">Budget (cents)</span>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            value={aiBudgetCents}
+            onChange={(event) => setAiBudgetCents(event.target.value)}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          />
+        </label>
       </div>
 
       {error ? (

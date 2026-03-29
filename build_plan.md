@@ -78,33 +78,33 @@ Step 7: AI — Photo Intake & Voice Notes
 [x] Pre-fill service entry form fields from structured JSON response
 [x] Add loading toast: "Recording → Transcribing → Structuring"
 Step 8: Audit Log, Summaries & Follow-Ups
-[ ] Supabase trigger on INSERT/UPDATE/DELETE for clients and service_entries → writes to audit_log (no PII values, just metadata)
-[ ] Admin audit log view page
-[ ] POST /ai/summarize-client — fetch all service entries for client, send to Gemini 2.5 Pro, return structured handoff summary
-[ ] "Generate Summary" button on client profile with "Regenerate" + copy-to-clipboard
-[ ] Ensure all AI outputs are shown as editable drafts — never auto-saved without human confirmation (human-in-the-loop)
-[ ] POST /ai/extract-followups — async call on every service entry save → Gemini 2.5 Flash → writes to follow_ups table
-[ ] Dashboard "Pending Follow-Ups" widget sorted by urgency (Supabase Realtime subscription)
+[x] Supabase trigger on INSERT/UPDATE/DELETE for clients and service_entries → writes to audit_log (no PII values, just metadata)
+[x] Admin audit log view page
+[x] POST /ai/summarize-client — fetch all service entries for client, send to Gemini 2.5 Pro, return structured handoff summary
+[x] "Generate Summary" button on client profile with "Regenerate" + copy-to-clipboard
+[x] Ensure all AI outputs are shown as editable drafts — never auto-saved without human confirmation (human-in-the-loop)
+[x] POST /ai/extract-followups — async call on every service entry save → Gemini 2.5 Flash → writes to follow_ups table
+[x] Dashboard "Pending Follow-Ups" widget sorted by urgency (Supabase Realtime subscription)
 Step 9: Full Integration & Funder Reports
-[ ] Wire all AI features into actual UI (semantic search bar, voice button, photo button, summary button, follow-ups widget)
-[ ] Add loading spinners/toasts to all AI calls
-[ ] End-to-end test of full user journey
-[ ] Admin dashboard "Generate Report" button with quarter date range picker
-[ ] POST /ai/funder-report — SQL aggregation → Gemini 2.5 Pro (long context, streaming) → narrative report
-[ ] Stream response to frontend via SSE (report appears word by word)
-[ ] Export report to .docx using python-docx
-[ ] Prepare "before vs after" demo: raw CSV dump vs polished report side by side
+[x] Wire all AI features into actual UI (semantic search bar, voice button, photo button, summary button, follow-ups widget)
+[x] Add loading spinners/toasts to all AI calls
+[x] End-to-end test of full user journey
+[x] Admin dashboard "Generate Report" button with quarter date range picker
+[x] POST /ai/funder-report — SQL aggregation → Gemini 2.5 Pro (long context, streaming) → narrative report
+[x] Stream response to frontend via SSE (report appears word by word)
+[x] Export report to .docx using python-docx
+[x] Prepare "before vs after" demo: raw CSV dump vs polished report side by side
 Step 10:
-[ ] Language toggle (EN/ES) on registration and service entry forms
-[ ] POST /ai/translate — check translations cache table first, call Gemini 2.5 Flash on miss, store result
-[ ] Batch-translate all form labels + placeholder text on language switch
-[ ] "Translate Note" toggle on case notes (inline translation, lighter font color)
-[ ] Reporting dashboard page — 4 charts using Recharts: active clients (stat), services this week/month/quarter (bar), service type breakdown (pie), visit trend (line)
-[ ] Print button (window.print() + print-only CSS) for PDF export
+[x] Language toggle (EN/ES) on registration and service entry forms
+[x] POST /ai/translate — check translations cache table first, call Gemini 2.5 Flash on miss, store result
+[x] Batch-translate all form labels + placeholder text on language switch
+[x] "Translate Note" toggle on case notes (inline translation, lighter font color)
+[x] Reporting dashboard page — 4 charts using Recharts: active clients (stat), services this week/month/quarter (bar), service type breakdown (pie), visit trend (line)
+[x] Print button (window.print() + print-only CSS) for PDF export
 Step 11: AI Cost Tracking & Demo Prep
-[ ] ai_usage_log table — log feature, model, tokens, cost, input/output hashes after every AI call (privacy audit trail)
-[ ] Per-org monthly AI budget cap in org_config — enforce at the API gateway, return 429 when exceeded
-[ ] Admin widget showing total AI spend (live dashboard)
+[x] ai_usage_log table — log feature, model, tokens, cost, input/output hashes after every AI call (privacy audit trail)
+[x] Per-org monthly AI budget cap in org_config — enforce at the API gateway, return 429 when exceeded
+[x] Admin widget showing total AI spend (live dashboard)
 [ ] Seed compelling demo narrative: fictional nonprofit "Sunrise Services", 3 realistic clients, one with 20+ case notes, one Spanish-speaking
 [ ] Script the 5-minute demo (spreadsheet chaos → photo intake → voice note → semantic search → handoff summary → funder report → AI spend = $0.14)
 [ ] Record demo video and prepare DevPost submission

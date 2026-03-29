@@ -7,17 +7,19 @@
 -- Helper: get current user's org_id (public schema to avoid auth permission issues)
 CREATE OR REPLACE FUNCTION public.user_org_id()
 RETURNS UUID
-LANGUAGE sql STABLE
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public
 AS $$
-    SELECT org_id FROM profiles WHERE id = auth.uid()
+    SELECT org_id FROM public.profiles WHERE id = auth.uid()
 $$;
 
 -- Helper: get current user's role (public schema to avoid auth permission issues)
 CREATE OR REPLACE FUNCTION public.user_role()
 RETURNS TEXT
-LANGUAGE sql STABLE
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public
 AS $$
-    SELECT role FROM profiles WHERE id = auth.uid()
+    SELECT role FROM public.profiles WHERE id = auth.uid()
 $$;
 
 -- ============================================================

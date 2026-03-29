@@ -1,19 +1,21 @@
 import Link from "next/link";
 
 import { ClientsAdminActions } from "@/components/clients-admin-actions";
+import { SemanticSearchPanel } from "@/components/semantic-search-panel";
 import { apiFetch } from "@/lib/api";
 import { requireAuthenticatedProfile } from "@/lib/auth";
 import type { ClientListResponse } from "@/types";
 
 type ClientsPageProps = {
-  searchParams?: {
+  searchParams: Promise<{
     search?: string;
-  };
+  }>;
 };
 
 export default async function ClientsPage({ searchParams }: ClientsPageProps) {
   const { profile, session } = await requireAuthenticatedProfile();
-  const search = searchParams?.search?.trim() ?? "";
+  const resolvedParams = await searchParams;
+  const search = resolvedParams?.search?.trim() ?? "";
   const query = search ? `?search=${encodeURIComponent(search)}` : "";
   const data = await apiFetch<ClientListResponse>(
     `/clients${query}`,
@@ -36,6 +38,10 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
       </div>
 
       {profile.role === "admin" ? <ClientsAdminActions /> : null}
+
+      <SemanticSearchPanel
+        enabled={profile.role === "staff" || profile.role === "admin"}
+      />
 
       <form className="w-full max-w-sm">
         <input

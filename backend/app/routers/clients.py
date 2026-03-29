@@ -84,7 +84,7 @@ async def list_clients(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     base_query = select(Client.id).where(Client.org_id == org_id)
 
     if search:
@@ -139,7 +139,7 @@ async def export_clients_csv(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_role(["admin"])),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     clients_result = await db.execute(
         select(Client)
         .where(Client.org_id == org_id)
@@ -170,7 +170,7 @@ async def import_clients_csv(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_role(["admin"])),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     created_by = UUID(current_user["sub"])
 
     if not file.filename or not file.filename.lower().endswith(".csv"):
@@ -236,7 +236,7 @@ async def create_client(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_role(["volunteer", "staff", "admin"])),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     config_result = await db.execute(select(OrgConfig).where(OrgConfig.org_id == org_id))
     org_config = config_result.scalar_one_or_none()
     extra_fields_schema = [
@@ -263,7 +263,7 @@ async def get_client(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     result = await db.execute(
         select(Client).where(Client.id == client_id, Client.org_id == org_id)
     )
@@ -280,7 +280,7 @@ async def update_client(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_role(["staff", "admin"])),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     config_result = await db.execute(select(OrgConfig).where(OrgConfig.org_id == org_id))
     org_config = config_result.scalar_one_or_none()
     extra_fields_schema = [
@@ -315,7 +315,7 @@ async def delete_client(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_role(["admin"])),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     result = await db.execute(
         select(Client).where(Client.id == client_id, Client.org_id == org_id)
     )

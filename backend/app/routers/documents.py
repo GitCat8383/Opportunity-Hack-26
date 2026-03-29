@@ -45,7 +45,7 @@ async def list_client_documents(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     await _get_client_for_org(client_id, org_id, db)
 
     result = await db.execute(
@@ -67,7 +67,7 @@ async def upload_client_document(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_role(["volunteer", "staff", "admin"])),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     await _get_client_for_org(client_id, org_id, db)
 
     if not file.filename:
@@ -118,7 +118,7 @@ async def download_client_document(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     await _get_client_for_org(client_id, org_id, db)
 
     result = await db.execute(
@@ -159,7 +159,7 @@ async def delete_client_document(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_role(["staff", "admin"])),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     await _get_client_for_org(client_id, org_id, db)
 
     result = await db.execute(

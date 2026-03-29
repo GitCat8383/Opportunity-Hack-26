@@ -36,7 +36,7 @@ async def get_org_config(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     org_config = await _get_or_create_org_config(db, org_id)
     return OrgConfigResponse.model_validate(org_config)
 
@@ -47,12 +47,13 @@ async def update_org_config(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_role(["admin"])),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     org_config = await _get_or_create_org_config(db, org_id)
 
     org_config.extra_fields_schema = [
         field.model_dump(mode="json") for field in data.extra_fields_schema
     ]
+    org_config.ai_monthly_budget_cents = data.ai_monthly_budget_cents
 
     await db.flush()
     await db.refresh(org_config)

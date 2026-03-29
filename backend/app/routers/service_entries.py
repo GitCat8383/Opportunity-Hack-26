@@ -14,6 +14,8 @@ from app.schemas.service_entry import (
     ServiceEntryResponse,
     ServiceEntryListResponse,
 )
+from app.services.ai_usage import AIUsageContext
+from app.services.follow_ups import extract_followups_background
 from app.services.semantic_search import embed_service_entry_background
 
 router = APIRouter(prefix="/service-entries", tags=["service-entries"])
@@ -27,7 +29,7 @@ async def list_service_entries(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     query = select(ServiceEntry).where(ServiceEntry.org_id == org_id)
 
     if client_id:
@@ -56,7 +58,7 @@ async def create_service_entry(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_role(["volunteer", "staff", "admin"])),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     client_exists = await db.execute(
         select(Client.id).where(Client.id == data.client_id, Client.org_id == org_id)
     )
@@ -81,7 +83,21 @@ async def create_service_entry(
     db.add(entry)
     await db.flush()
     await db.refresh(entry)
-    background_tasks.add_task(embed_service_entry_background, entry.id)
+    usage_context = AIUsageContext(
+        org_id=org_id,
+        user_id=current_user["sub"],
+        feature="embed",
+    )
+    background_tasks.add_task(embed_service_entry_background, entry.id, usage_context)
+    background_tasks.add_task(
+        extract_followups_background,
+        entry.id,
+        AIUsageContext(
+            org_id=org_id,
+            user_id=current_user["sub"],
+            feature="extract_followups",
+        ),
+    )
     return ServiceEntryResponse.model_validate(entry)
 
 
@@ -91,7 +107,7 @@ async def get_service_entry(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     result = await db.execute(
         select(ServiceEntry).where(ServiceEntry.id == entry_id, ServiceEntry.org_id == org_id)
     )
@@ -105,10 +121,11 @@ async def get_service_entry(
 async def update_service_entry(
     entry_id: UUID,
     data: ServiceEntryUpdate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_role(["staff", "admin"])),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     result = await db.execute(
         select(ServiceEntry).where(ServiceEntry.id == entry_id, ServiceEntry.org_id == org_id)
     )
@@ -121,4 +138,22 @@ async def update_service_entry(
 
     await db.flush()
     await db.refresh(entry)
+    background_tasks.add_task(
+        embed_service_entry_background,
+        entry.id,
+        AIUsageContext(
+            org_id=org_id,
+            user_id=current_user["sub"],
+            feature="embed",
+        ),
+    )
+    background_tasks.add_task(
+        extract_followups_background,
+        entry.id,
+        AIUsageContext(
+            org_id=org_id,
+            user_id=current_user["sub"],
+            feature="extract_followups",
+        ),
+    )
     return ServiceEntryResponse.model_validate(entry)

@@ -53,6 +53,7 @@ class OrgConfigResponse(BaseModel):
 
 class OrgConfigUpdate(BaseModel):
     extra_fields_schema: list[CustomFieldDefinition]
+    ai_monthly_budget_cents: int = Field(ge=0, le=1_000_000)
 
 
 class ClientImportRowError(BaseModel):

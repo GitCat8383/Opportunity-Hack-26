@@ -1,44 +1,46 @@
 "use client";
 
 import { useState } from "react";
+import { useFormState, useFormStatus } from "react-dom";
+
 import { createClient } from "@/lib/supabase/client";
+import { signInWithEmailPassword, type LoginFormState } from "./actions";
+
+function EmailSignInButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="w-full rounded-md bg-primary py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition"
+    >
+      {pending ? "Signing in..." : "Sign In with Email"}
+    </button>
+  );
+}
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const initialLoginFormState: LoginFormState = { error: null };
+  const [formState, formAction] = useFormState(
+    signInWithEmailPassword,
+    initialLoginFormState
+  );
+  const [oauthLoading, setOauthLoading] = useState(false);
+  const [oauthError, setOauthError] = useState<string | null>(null);
 
   const supabase = createClient();
 
-  async function handleEmailLogin(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-      return;
-    }
-
-    window.location.href = "/dashboard";
-  }
-
   async function handleGoogleLogin() {
-    setLoading(true);
+    setOauthLoading(true);
+    setOauthError(null);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: `${window.location.origin}/dashboard` },
     });
     if (error) {
-      setError(error.message);
-      setLoading(false);
+      setOauthError(error.message);
+      setOauthLoading(false);
     }
   }
 
@@ -52,22 +54,21 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {error && (
+        {(formState.error || oauthError) && (
           <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-            {error}
+            {formState.error ?? oauthError}
           </div>
         )}
 
-        <form onSubmit={handleEmailLogin} className="space-y-4">
+        <form action={formAction} className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium mb-1">
               Email
             </label>
             <input
               id="email"
+              name="email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               placeholder="you@nonprofit.org"
@@ -82,20 +83,13 @@ export default function LoginPage() {
             </label>
             <input
               id="password"
+              name="password"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
               required
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             />
           </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-md bg-primary py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition"
-          >
-            {loading ? "Signing in..." : "Sign In with Email"}
-          </button>
+          <EmailSignInButton />
         </form>
 
         <div className="relative">
@@ -109,7 +103,7 @@ export default function LoginPage() {
 
         <button
           onClick={handleGoogleLogin}
-          disabled={loading}
+          disabled={oauthLoading}
           className="w-full rounded-md border border-input bg-background py-2 text-sm font-medium hover:bg-accent transition disabled:opacity-50"
         >
           Sign In with Google

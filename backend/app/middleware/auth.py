@@ -17,7 +17,11 @@ def get_token(request: Request) -> str:
 
 
 def get_current_user(token: str = Depends(get_token)) -> dict:
-    """Validate Supabase access token and enrich it with profile role/org data."""
+    """Validate Supabase access token and return user with profile data.
+
+    org_id and role are read exclusively from the profiles table —
+    never from user_metadata (which is user-editable).
+    """
     try:
         auth_response = get_supabase_client().auth.get_user(token)
         user = auth_response.user
@@ -35,21 +39,19 @@ def get_current_user(token: str = Depends(get_token)) -> dict:
             .maybe_single()
             .execute()
         )
-        profile = profile_response.data or {}
-        user_metadata = dict(user.user_metadata or {})
-        if profile:
-            user_metadata["org_id"] = profile.get("org_id", user_metadata.get("org_id"))
-            user_metadata["role"] = profile.get("role", user_metadata.get("role"))
-            user_metadata["full_name"] = profile.get(
-                "full_name",
-                user_metadata.get("full_name"),
+        profile = profile_response.data
+        if not profile or not profile.get("org_id"):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User profile not found or missing organization. Contact your admin.",
             )
 
         return {
             "sub": user.id,
             "email": user.email,
-            "user_metadata": user_metadata,
-            "app_metadata": user.app_metadata or {},
+            "org_id": profile["org_id"],
+            "role": profile["role"],
+            "full_name": profile.get("full_name", ""),
             "profile": profile,
         }
     except HTTPException:
@@ -65,7 +67,7 @@ def require_role(allowed_roles: list[str]):
     """Dependency factory that checks user role against allowed roles."""
 
     def check_role(current_user: dict = Depends(get_current_user)) -> dict:
-        user_role = current_user.get("user_metadata", {}).get("role", "volunteer")
+        user_role = current_user["role"]
         if user_role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

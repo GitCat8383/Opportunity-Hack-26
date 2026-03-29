@@ -30,7 +30,7 @@ export default async function ClientConfigPage() {
         </Link>
       </div>
 
-      <CustomFieldsManager initialSchema={orgConfig.extra_fields_schema} />
+      <CustomFieldsManager initialConfig={orgConfig} />
     </div>
   );
 }

@@ -6,9 +6,9 @@ import { requireAuthenticatedProfile } from "@/lib/auth";
 import type { Client } from "@/types";
 
 type NewServiceEntryPageProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 const DEFAULT_SERVICE_TYPES = [
@@ -30,10 +30,11 @@ export default async function NewServiceEntryPage({
     "staff",
     "admin",
   ]);
+  const { id } = await params;
 
   try {
     const client = await apiFetch<Client>(
-      `/clients/${params.id}`,
+      `/clients/${id}`,
       { cache: "no-store" },
       session.access_token
     );

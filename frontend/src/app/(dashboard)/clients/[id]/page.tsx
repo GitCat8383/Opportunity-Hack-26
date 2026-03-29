@@ -2,19 +2,22 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ClientDocumentsPanel } from "@/components/client-documents-panel";
+import { ServiceHistoryList } from "@/components/service-history-list";
+import { ClientSummaryPanel } from "@/components/client-summary-panel";
 import { ApiError, apiFetch } from "@/lib/api";
 import { requireAuthenticatedProfile } from "@/lib/auth";
 import type {
   Client,
+  ClientSummary,
   DocumentListResponse,
   OrgConfig,
   ServiceEntryListResponse,
 } from "@/types";
 
 type ClientProfilePageProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 function DetailRow({
@@ -38,18 +41,24 @@ export default async function ClientProfilePage({
   params,
 }: ClientProfilePageProps) {
   const { profile, session } = await requireAuthenticatedProfile();
+  const { id } = await params;
 
   try {
-    const [client, orgConfig, serviceEntries, documents] = await Promise.all([
-      apiFetch<Client>(`/clients/${params.id}`, { cache: "no-store" }, session.access_token),
+    const [client, orgConfig, serviceEntries, documents, latestSummary] = await Promise.all([
+      apiFetch<Client>(`/clients/${id}`, { cache: "no-store" }, session.access_token),
       apiFetch<OrgConfig>("/org-config", { cache: "no-store" }, session.access_token),
       apiFetch<ServiceEntryListResponse>(
-        `/service-entries?client_id=${params.id}&per_page=100`,
+        `/service-entries?client_id=${id}&per_page=100`,
         { cache: "no-store" },
         session.access_token
       ),
       apiFetch<DocumentListResponse>(
-        `/clients/${params.id}/documents`,
+        `/clients/${id}/documents`,
+        { cache: "no-store" },
+        session.access_token
+      ),
+      apiFetch<ClientSummary | null>(
+        `/clients/${id}/summary`,
         { cache: "no-store" },
         session.access_token
       ),
@@ -126,6 +135,12 @@ export default async function ClientProfilePage({
           </section>
 
           <div className="space-y-6">
+            <ClientSummaryPanel
+              clientId={client.id}
+              latestSummary={latestSummary}
+              role={profile.role}
+            />
+
             <section className="rounded-lg border bg-card p-5">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="font-semibold">Service History</h2>
@@ -139,40 +154,10 @@ export default async function ClientProfilePage({
                   No services logged yet for this client.
                 </p>
               ) : (
-                <div className="space-y-4">
-                  {serviceEntries.entries.map((entry) => (
-                    <article key={entry.id} className="rounded-lg border p-4">
-                      <div className="flex items-center justify-between gap-4">
-                        <div>
-                          <p className="font-medium">{entry.service_type}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {entry.service_date}
-                          </p>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Staff ID: {entry.staff_id}
-                        </p>
-                      </div>
-
-                      {entry.summary ? (
-                        <p className="mt-3 text-sm">
-                          <span className="font-medium">Summary:</span>{" "}
-                          {entry.summary}
-                        </p>
-                      ) : null}
-
-                      <p className="mt-3 whitespace-pre-wrap text-sm">
-                        {entry.notes || "No notes recorded."}
-                      </p>
-
-                      {entry.action_items.length > 0 ? (
-                        <p className="mt-3 text-sm text-muted-foreground">
-                          Action items: {entry.action_items.join(", ")}
-                        </p>
-                      ) : null}
-                    </article>
-                  ))}
-                </div>
+                <ServiceHistoryList
+                  entries={serviceEntries.entries}
+                  clientPreferredLanguage={client.language}
+                />
               )}
             </section>
 

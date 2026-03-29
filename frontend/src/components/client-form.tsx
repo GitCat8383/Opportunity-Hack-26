@@ -1,11 +1,13 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { apiFetch, ApiError } from "@/lib/api";
+import { useAiTranslations } from "@/hooks/use-ai-translations";
 import { createClient } from "@/lib/supabase/client";
 import type { CustomFieldDefinition, PhotoIntakeResult } from "@/types";
+import { AiStatusToast } from "./ai-status-toast";
 
 type ClientFormProps = {
   extraFieldsSchema: CustomFieldDefinition[];
@@ -117,6 +119,7 @@ export function ClientForm({ extraFieldsSchema, canUseAi }: ClientFormProps) {
   const router = useRouter();
   const supabase = createClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [displayLanguage, setDisplayLanguage] = useState<"en" | "es">("en");
   const [formValues, setFormValues] = useState<ClientFormValues>(DEFAULT_VALUES);
   const [extraFieldValues, setExtraFieldValues] = useState<Record<string, string>>(
     {}
@@ -125,6 +128,68 @@ export function ClientForm({ extraFieldsSchema, canUseAi }: ClientFormProps) {
   const [aiLoading, setAiLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    tone: "loading" | "success" | "error";
+    message: string | null;
+  }>({ tone: "loading", message: null });
+  const translationTexts = useMemo(
+    () => [
+      "Register Client",
+      "Switch the form language without changing the client's saved preferred language.",
+      "Form Language",
+      "English",
+      "Spanish",
+      "AI Photo Intake",
+      "Scan an intake image to prefill the registration form.",
+      "Scan Intake Form",
+      "Scanning...",
+      "First Name",
+      "Last Name",
+      "Date of Birth",
+      "Language",
+      "Phone",
+      "Email",
+      "Gender",
+      "Household Size",
+      "Address",
+      "Custom Fields",
+      "These fields are configured per organization.",
+      "Select an option",
+      "Create Client",
+      "Saving...",
+      "you@nonprofit.org",
+      "Client phone number",
+      "Street address",
+      "Scan intake form with AI...",
+      "Photo intake fields were added to the form.",
+      "Unable to scan intake form.",
+      ...extraFieldsSchema.flatMap((field) => [field.label, ...field.options]),
+    ],
+    [extraFieldsSchema]
+  );
+  const {
+    t,
+    loading: translatingUi,
+  } = useAiTranslations({
+    texts: translationTexts,
+    targetLanguage: displayLanguage,
+    enabled: displayLanguage === "es",
+  });
+
+  function showToast(
+    tone: "loading" | "success" | "error",
+    message: string | null,
+    dismissAfterMs?: number
+  ) {
+    setToast({ tone, message });
+    if (dismissAfterMs) {
+      window.setTimeout(() => {
+        setToast((current) =>
+          current.message === message ? { ...current, message: null } : current
+        );
+      }, dismissAfterMs);
+    }
+  }
 
   async function getAccessToken() {
     const {
@@ -173,10 +238,12 @@ export function ClientForm({ extraFieldsSchema, canUseAi }: ClientFormProps) {
   async function submitPhotoIntake(dataUrl: string) {
     setAiLoading(true);
     setAiError(null);
+    showToast("loading", "Scanning intake form with AI...");
 
     try {
       const accessToken = await getAccessToken();
       if (!accessToken) {
+        setToast({ tone: "loading", message: null });
         return;
       }
 
@@ -194,12 +261,12 @@ export function ClientForm({ extraFieldsSchema, canUseAi }: ClientFormProps) {
       );
 
       applyPhotoIntake(result);
+      showToast("success", "Photo intake fields were added to the form.", 2500);
     } catch (err) {
-      setAiError(
-        err instanceof ApiError
-          ? err.message
-          : "Unable to scan intake form."
-      );
+      const message =
+        err instanceof ApiError ? err.message : "Unable to scan intake form.";
+      setAiError(message);
+      showToast("error", message, 3500);
     } finally {
       setAiLoading(false);
     }
@@ -300,13 +367,45 @@ export function ClientForm({ extraFieldsSchema, canUseAi }: ClientFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="rounded-lg border bg-card p-4 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-semibold">{t("Register Client")}</h2>
+            <p className="text-sm text-muted-foreground">
+              {t(
+                "Switch the form language without changing the client's saved preferred language."
+              )}
+            </p>
+          </div>
+          <div className="inline-flex rounded-md border bg-background p-1">
+            {(["en", "es"] as const).map((lang) => (
+              <button
+                key={lang}
+                type="button"
+                onClick={() => setDisplayLanguage(lang)}
+                className={`rounded px-3 py-1.5 text-sm transition ${
+                  displayLanguage === lang ? "bg-primary text-primary-foreground" : ""
+                }`}
+              >
+                {lang === "en" ? t("English") : t("Spanish")}
+              </button>
+            ))}
+          </div>
+        </div>
+        {translatingUi ? (
+          <p className="text-xs text-muted-foreground">
+            {t("Translating form...")}
+          </p>
+        ) : null}
+      </div>
+
       {canUseAi ? (
         <div className="rounded-lg border bg-card p-4 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="font-semibold">AI Photo Intake</h2>
+              <h2 className="font-semibold">{t("AI Photo Intake")}</h2>
               <p className="text-sm text-muted-foreground">
-                Scan an intake image to prefill the registration form.
+                {t("Scan an intake image to prefill the registration form.")}
               </p>
             </div>
             <input
@@ -322,7 +421,7 @@ export function ClientForm({ extraFieldsSchema, canUseAi }: ClientFormProps) {
               disabled={aiLoading}
               className="rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent disabled:opacity-50 transition"
             >
-              {aiLoading ? "Scanning..." : "Scan Intake Form"}
+              {aiLoading ? t("Scanning...") : t("Scan Intake Form")}
             </button>
           </div>
 
@@ -356,7 +455,7 @@ export function ClientForm({ extraFieldsSchema, canUseAi }: ClientFormProps) {
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-1">
-          <span className="text-sm font-medium">First Name</span>
+          <span className="text-sm font-medium">{t("First Name")}</span>
           <input
             name="first_name"
             required
@@ -366,7 +465,7 @@ export function ClientForm({ extraFieldsSchema, canUseAi }: ClientFormProps) {
           />
         </label>
         <label className="space-y-1">
-          <span className="text-sm font-medium">Last Name</span>
+          <span className="text-sm font-medium">{t("Last Name")}</span>
           <input
             name="last_name"
             required
@@ -376,7 +475,7 @@ export function ClientForm({ extraFieldsSchema, canUseAi }: ClientFormProps) {
           />
         </label>
         <label className="space-y-1">
-          <span className="text-sm font-medium">Date of Birth</span>
+          <span className="text-sm font-medium">{t("Date of Birth")}</span>
           <input
             name="date_of_birth"
             type="date"
@@ -388,39 +487,41 @@ export function ClientForm({ extraFieldsSchema, canUseAi }: ClientFormProps) {
           />
         </label>
         <label className="space-y-1">
-          <span className="text-sm font-medium">Language</span>
+          <span className="text-sm font-medium">{t("Language")}</span>
           <select
             name="language"
             value={formValues.language}
             onChange={(event) => updateFormValue("language", event.target.value)}
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
-            <option value="en">English</option>
-            <option value="es">Spanish</option>
+            <option value="en">{t("English")}</option>
+            <option value="es">{t("Spanish")}</option>
           </select>
         </label>
         <label className="space-y-1">
-          <span className="text-sm font-medium">Phone</span>
+          <span className="text-sm font-medium">{t("Phone")}</span>
           <input
             name="phone"
             type="tel"
             value={formValues.phone}
             onChange={(event) => updateFormValue("phone", event.target.value)}
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            placeholder={t("Client phone number")}
           />
         </label>
         <label className="space-y-1">
-          <span className="text-sm font-medium">Email</span>
+          <span className="text-sm font-medium">{t("Email")}</span>
           <input
             name="email"
             type="email"
             value={formValues.email}
             onChange={(event) => updateFormValue("email", event.target.value)}
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            placeholder={t("you@nonprofit.org")}
           />
         </label>
         <label className="space-y-1">
-          <span className="text-sm font-medium">Gender</span>
+          <span className="text-sm font-medium">{t("Gender")}</span>
           <input
             name="gender"
             value={formValues.gender}
@@ -429,7 +530,7 @@ export function ClientForm({ extraFieldsSchema, canUseAi }: ClientFormProps) {
           />
         </label>
         <label className="space-y-1">
-          <span className="text-sm font-medium">Household Size</span>
+          <span className="text-sm font-medium">{t("Household Size")}</span>
           <input
             name="household_size"
             type="number"
@@ -444,22 +545,23 @@ export function ClientForm({ extraFieldsSchema, canUseAi }: ClientFormProps) {
       </div>
 
       <label className="block space-y-1">
-        <span className="text-sm font-medium">Address</span>
+        <span className="text-sm font-medium">{t("Address")}</span>
         <textarea
           name="address"
           rows={3}
           value={formValues.address}
           onChange={(event) => updateFormValue("address", event.target.value)}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          placeholder={t("Street address")}
         />
       </label>
 
       {extraFieldsSchema.length > 0 ? (
         <div className="space-y-3 rounded-lg border p-4">
           <div>
-            <h2 className="font-semibold">Custom Fields</h2>
+            <h2 className="font-semibold">{t("Custom Fields")}</h2>
             <p className="text-sm text-muted-foreground">
-              These fields are configured per organization.
+              {t("These fields are configured per organization.")}
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
@@ -469,7 +571,7 @@ export function ClientForm({ extraFieldsSchema, canUseAi }: ClientFormProps) {
               if (field.field_type === "textarea") {
                 return (
                   <label key={field.key} className="space-y-1 md:col-span-2">
-                    <span className="text-sm font-medium">{field.label}</span>
+                    <span className="text-sm font-medium">{t(field.label)}</span>
                     <textarea
                       name={`extra_${field.key}`}
                       required={field.required}
@@ -490,7 +592,7 @@ export function ClientForm({ extraFieldsSchema, canUseAi }: ClientFormProps) {
               if (field.field_type === "select") {
                 return (
                   <label key={field.key} className="space-y-1">
-                    <span className="text-sm font-medium">{field.label}</span>
+                    <span className="text-sm font-medium">{t(field.label)}</span>
                     <select
                       name={`extra_${field.key}`}
                       required={field.required}
@@ -503,10 +605,10 @@ export function ClientForm({ extraFieldsSchema, canUseAi }: ClientFormProps) {
                       }
                       className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     >
-                      <option value="">Select an option</option>
+                      <option value="">{t("Select an option")}</option>
                       {field.options.map((option) => (
                         <option key={option} value={option}>
-                          {option}
+                          {t(option)}
                         </option>
                       ))}
                     </select>
@@ -516,7 +618,7 @@ export function ClientForm({ extraFieldsSchema, canUseAi }: ClientFormProps) {
 
               return (
                 <label key={field.key} className="space-y-1">
-                  <span className="text-sm font-medium">{field.label}</span>
+                  <span className="text-sm font-medium">{t(field.label)}</span>
                   <input
                     name={`extra_${field.key}`}
                     required={field.required}
@@ -549,9 +651,11 @@ export function ClientForm({ extraFieldsSchema, canUseAi }: ClientFormProps) {
           disabled={loading}
           className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition"
         >
-          {loading ? "Saving..." : "Create Client"}
+          {loading ? t("Saving...") : t("Create Client")}
         </button>
       </div>
+
+      <AiStatusToast message={toast.message} tone={toast.tone} />
     </form>
   );
 }

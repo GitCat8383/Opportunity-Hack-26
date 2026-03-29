@@ -23,9 +23,11 @@ SUPABASE_SERVICE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 # ── Organization ──────────────────────────────────────────────
-ORG_ID = str(uuid.uuid4())
+ORG_NAME = "Sunrise Services"
+ORG_SLUG = "sunrise-services"
+ORG_SETTINGS = {}
 org = {
-    "id": ORG_ID,
+    "id": str(uuid.uuid4()),
     "name": "Sunrise Services",
     "slug": "sunrise-services",
     "settings": {},
@@ -118,17 +120,85 @@ CASE_NOTES = [
 ]
 
 
-def create_auth_users():
+def ensure_organization():
+    existing_org = (
+        supabase.table("organizations")
+        .select("id")
+        .eq("slug", ORG_SLUG)
+        .maybe_single()
+        .execute()
+    )
+
+    if existing_org.data:
+        print(f"  Reusing org: {ORG_NAME}")
+        return existing_org.data["id"], False
+
+    org_id = org["id"]
+    print(f"  Creating org: {ORG_NAME}")
+    supabase.table("organizations").insert({
+        "id": org_id,
+        "name": ORG_NAME,
+        "slug": ORG_SLUG,
+        "settings": ORG_SETTINGS,
+    }).execute()
+    return org_id, True
+
+
+def ensure_org_config(org_id):
+    existing_config = (
+        supabase.table("org_config")
+        .select("org_id")
+        .eq("org_id", org_id)
+        .maybe_single()
+        .execute()
+    )
+
+    payload = build_org_config(org_id)
+
+    if existing_config.data:
+        print("  Updating existing org config...")
+        supabase.table("org_config").update(payload).eq("org_id", org_id).execute()
+        return False
+
+    print("  Creating org config...")
+    supabase.table("org_config").insert(payload).execute()
+    return True
+
+
+def create_auth_users(org_id):
     """Create real Supabase auth users so profile FK constraints are satisfied."""
     staff_with_ids = []
     for s in STAFF_DEFS:
+        existing_profile = (
+            supabase.table("profiles")
+            .select("id, full_name, email, role")
+            .eq("email", s["email"])
+            .maybe_single()
+            .execute()
+        )
+
+        if existing_profile.data:
+            print(f"  Reusing auth user: {s['email']}")
+            supabase.table("profiles").update({
+                "org_id": org_id,
+                "full_name": s["full_name"],
+                "role": s["role"],
+            }).eq("id", existing_profile.data["id"]).execute()
+            staff_with_ids.append({
+                "id": existing_profile.data["id"],
+                "full_name": s["full_name"],
+                "email": s["email"],
+                "role": s["role"],
+            })
+            continue
+
         print(f"  Creating auth user: {s['email']}")
         result = supabase.auth.admin.create_user({
             "email": s["email"],
             "password": s["password"],
             "email_confirm": True,
             "user_metadata": {
-                "org_id": ORG_ID,
+                "org_id": org_id,
                 "full_name": s["full_name"],
                 "role": s["role"],
             },
@@ -142,7 +212,7 @@ def create_auth_users():
     return staff_with_ids
 
 
-def build_clients(staff_ids):
+def build_clients(staff_ids, org_id):
     clients = []
     client_ids = []
     for c in CLIENT_DATA:
@@ -150,7 +220,7 @@ def build_clients(staff_ids):
         client_ids.append(cid)
         clients.append({
             "id": cid,
-            "org_id": ORG_ID,
+            "org_id": org_id,
             "first_name": c["first_name"],
             "last_name": c["last_name"],
             "date_of_birth": c["date_of_birth"],
@@ -165,7 +235,7 @@ def build_clients(staff_ids):
     return clients, client_ids
 
 
-def build_service_entries(client_ids, staff_ids):
+def build_service_entries(client_ids, staff_ids, org_id):
     entries = []
     today = date.today()
     for i in range(50):
@@ -176,7 +246,7 @@ def build_service_entries(client_ids, staff_ids):
         note = random.choice(CASE_NOTES)
         entries.append({
             "id": str(uuid.uuid4()),
-            "org_id": ORG_ID,
+            "org_id": org_id,
             "client_id": client_id,
             "staff_id": staff_id,
             "service_date": service_date.isoformat(),
@@ -189,9 +259,9 @@ def build_service_entries(client_ids, staff_ids):
     return entries
 
 
-def build_org_config():
+def build_org_config(org_id):
     return {
-        "org_id": ORG_ID,
+        "org_id": org_id,
         "extra_fields_schema": [],
         "service_types": SERVICE_TYPES,
         "ai_features_enabled": {
@@ -211,19 +281,17 @@ def seed():
     print("Seeding database...")
 
     # 1. Organization
-    print(f"  Creating org: {org['name']}")
-    supabase.table("organizations").insert(org).execute()
+    org_id, created_org = ensure_organization()
 
     # 2. Org config
-    print("  Creating org config...")
-    supabase.table("org_config").insert(build_org_config()).execute()
+    ensure_org_config(org_id)
 
     # 3. Auth users + Profiles
     # The handle_new_user trigger auto-creates profiles when auth users are created.
     # But we insert profiles manually to ensure correct data, so we check if the
     # trigger already created them and skip if so.
     print(f"  Creating {len(STAFF_DEFS)} auth users (profiles auto-created by trigger)...")
-    staff = create_auth_users()
+    staff = create_auth_users(org_id)
     staff_ids = [s["id"] for s in staff]
 
     # Verify profiles were created by the trigger
@@ -233,23 +301,49 @@ def seed():
         print(f"    - {p['full_name']} ({p['role']})")
 
     # 4. Clients
-    clients, client_ids = build_clients(staff_ids)
-    print(f"  Creating {len(clients)} clients...")
-    supabase.table("clients").insert(clients).execute()
+    existing_clients = (
+        supabase.table("clients")
+        .select("id")
+        .eq("org_id", org_id)
+        .execute()
+    )
+
+    if existing_clients.data:
+        print(f"  Reusing {len(existing_clients.data)} existing clients...")
+        client_ids = [client["id"] for client in existing_clients.data]
+        clients_created = 0
+    else:
+        clients, client_ids = build_clients(staff_ids, org_id)
+        print(f"  Creating {len(clients)} clients...")
+        supabase.table("clients").insert(clients).execute()
+        clients_created = len(clients)
 
     # 5. Service entries
-    entries = build_service_entries(client_ids, staff_ids)
-    print(f"  Creating {len(entries)} service entries...")
-    # Insert in batches of 25
-    for i in range(0, len(entries), 25):
-        batch = entries[i:i + 25]
-        supabase.table("service_entries").insert(batch).execute()
+    existing_entries = (
+        supabase.table("service_entries")
+        .select("id")
+        .eq("org_id", org_id)
+        .execute()
+    )
+
+    if existing_entries.data:
+        print(f"  Reusing {len(existing_entries.data)} existing service entries...")
+        entries_created = 0
+    else:
+        entries = build_service_entries(client_ids, staff_ids, org_id)
+        print(f"  Creating {len(entries)} service entries...")
+        for i in range(0, len(entries), 25):
+            batch = entries[i:i + 25]
+            supabase.table("service_entries").insert(batch).execute()
+        entries_created = len(entries)
 
     print("\nDone! Seeded Sunrise Services with:")
-    print(f"  - 1 organization (ID: {ORG_ID})")
+    print(f"  - 1 organization (ID: {org_id})")
     print(f"  - {len(staff)} staff (auth users with profiles)")
-    print(f"  - {len(clients)} clients")
-    print(f"  - {len(entries)} service entries")
+    print(f"  - {clients_created} newly created clients")
+    print(f"  - {entries_created} newly created service entries")
+    if not created_org:
+        print("  - Existing demo org and seeded records were reused when present")
     print(f"\nDemo login credentials (all passwords: SeedPass123!):")
     for s in staff:
         print(f"  - {s['email']} ({s['role']})")

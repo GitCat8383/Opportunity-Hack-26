@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.schemas.client_summary import ClientSummaryDraftResponse
 
 class EmbedRequest(BaseModel):
     service_entry_id: UUID
@@ -69,3 +70,67 @@ class StructureNoteResponse(BaseModel):
     action_items: list[str] = Field(default_factory=list)
     follow_up_date: date | None = None
     risk_flag: bool = False
+
+
+class SummarizeClientRequest(BaseModel):
+    client_id: UUID
+
+
+class SummarizeClientResponse(ClientSummaryDraftResponse):
+    pass
+
+
+class ExtractedFollowUpItem(BaseModel):
+    description: str = Field(min_length=1)
+    category: str | None = None
+    urgency: str = Field(default="medium")
+    due_date: date | None = None
+
+
+class ExtractFollowUpsRequest(BaseModel):
+    service_entry_id: UUID
+
+
+class ExtractFollowUpsResponse(BaseModel):
+    service_entry_id: UUID
+    follow_ups: list[ExtractedFollowUpItem] = Field(default_factory=list)
+
+
+class FunderReportRequest(BaseModel):
+    start_date: date
+    end_date: date
+
+
+class FunderReportResponse(BaseModel):
+    title: str = Field(min_length=1)
+    executive_summary: str = Field(min_length=1)
+    narrative: str = Field(min_length=1)
+    key_outcomes: list[str] = Field(default_factory=list)
+    data_quality_notes: list[str] = Field(default_factory=list)
+
+
+class FunderReportDocxRequest(BaseModel):
+    title: str = Field(min_length=1)
+    org_name: str = Field(min_length=1)
+    start_date: date
+    end_date: date
+    report_text: str = Field(min_length=1)
+    raw_csv: str | None = None
+
+
+class TranslateRequest(BaseModel):
+    texts: list[str] = Field(min_length=1)
+    source_lang: str = Field(default="en", min_length=2, max_length=8)
+    target_lang: str = Field(min_length=2, max_length=8)
+
+
+class TranslationItemResponse(BaseModel):
+    source_text: str
+    translated_text: str
+    from_cache: bool = False
+
+
+class TranslateResponse(BaseModel):
+    source_lang: str
+    target_lang: str
+    translations: list[TranslationItemResponse] = Field(default_factory=list)

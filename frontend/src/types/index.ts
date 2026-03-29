@@ -90,6 +90,56 @@ export interface StructuredNoteResult {
   risk_flag: boolean;
 }
 
+export interface SemanticSearchResult {
+  service_entry_id: string;
+  client_id: string;
+  client_name: string;
+  service_date: string;
+  service_type: string;
+  content_snippet: string;
+  similarity: number;
+}
+
+export interface SemanticSearchResponse {
+  query: string;
+  results: SemanticSearchResult[];
+}
+
+export interface ClientSummaryStructured {
+  background: string | null;
+  services_history: string[];
+  current_status: string | null;
+  active_needs: string[];
+  risk_factors: string[];
+  next_steps: string[];
+}
+
+export interface ClientSummary {
+  id: string;
+  org_id: string;
+  client_id: string;
+  generated_by: string;
+  summary_text: string;
+  summary_structured: ClientSummaryStructured | null;
+  created_at: string;
+}
+
+export interface ClientSummaryDraft {
+  summary_text: string;
+  summary_structured: ClientSummaryStructured;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  org_id: string;
+  user_id: string | null;
+  action: string;
+  table_name: string;
+  record_id: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
 export interface FollowUp {
   id: string;
   org_id: string;
@@ -174,4 +224,35 @@ export interface AppointmentListResponse {
 
 export interface DocumentListResponse {
   documents: ClientDocument[];
+}
+
+export interface FunderReportMetrics {
+  summary: Record<string, number>;
+  service_breakdown: Array<{ service_type: string; count: number }>;
+  languages_served: Array<{ language: string; count: number }>;
+  monthly_services: Array<{ month: string; count: number }>;
+  appointments: Array<{ status: string; count: number }>;
+  follow_ups: Array<{ status: string; count: number }>;
+}
+
+export interface FunderReportStreamMeta {
+  title: string;
+  org_name: string;
+  start_date: string;
+  end_date: string;
+  period_label: string;
+  metrics: FunderReportMetrics;
+  raw_csv: string;
+}
+
+export interface TranslationItem {
+  source_text: string;
+  translated_text: string;
+  from_cache: boolean;
+}
+
+export interface TranslateResponse {
+  source_lang: string;
+  target_lang: string;
+  translations: TranslationItem[];
 }

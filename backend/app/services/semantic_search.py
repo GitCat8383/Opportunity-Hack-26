@@ -2,6 +2,7 @@ import logging
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
+from time import perf_counter
 from uuid import UUID
 
 import httpx
@@ -11,6 +12,13 @@ from app.core.config import get_settings
 from app.core.database import async_session
 from app.models.client import Client
 from app.models.service_entry import ServiceEntry
+from app.services.ai_usage import (
+    AIBudgetExceededError,
+    AIUsageContext,
+    elapsed_ms,
+    enforce_ai_budget,
+    record_embedding_usage,
+)
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -82,6 +90,7 @@ async def embed_service_entry(
     service_entry_id: UUID,
     *,
     expected_org_id: UUID | str | None = None,
+    usage_context: AIUsageContext | None = None,
 ) -> EmbeddedEntry:
     async with async_session() as session:
         result = await session.execute(
@@ -94,6 +103,7 @@ async def embed_service_entry(
             raise ValueError("Service entry not found")
 
         embedding_input = _build_embedding_input(entry)
+        start_time = perf_counter()
         embedding = await generate_embedding(embedding_input)
         snippet = _build_content_snippet(entry)
 
@@ -115,14 +125,30 @@ async def embed_service_entry(
                 "content_snippet": snippet,
             },
         )
+        await record_embedding_usage(
+            context=usage_context,
+            model=EMBEDDING_MODEL,
+            text_input=embedding_input,
+            output_payload=embedding,
+            duration_ms=elapsed_ms(start_time),
+            session=session,
+        )
         await session.commit()
 
     return EmbeddedEntry(service_entry_id=service_entry_id, content_snippet=snippet)
 
 
-async def embed_service_entry_background(service_entry_id: UUID) -> None:
+async def embed_service_entry_background(
+    service_entry_id: UUID,
+    usage_context: AIUsageContext | None = None,
+) -> None:
     try:
-        await embed_service_entry(service_entry_id)
+        if usage_context is not None:
+            async with async_session() as session:
+                await enforce_ai_budget(session, usage_context.org_id)
+        await embed_service_entry(service_entry_id, usage_context=usage_context)
+    except AIBudgetExceededError:
+        logger.info("Skipping embed for %s due to AI budget cap", service_entry_id)
     except Exception:
         logger.exception("Failed to embed service entry %s", service_entry_id)
 
@@ -133,8 +159,17 @@ async def semantic_search_entries(
     query: str,
     threshold: float,
     limit: int,
+    usage_context: AIUsageContext | None = None,
 ) -> list[SearchMatch]:
+    start_time = perf_counter()
     query_embedding = await generate_embedding(query)
+    await record_embedding_usage(
+        context=usage_context,
+        model=EMBEDDING_MODEL,
+        text_input=query,
+        output_payload=query_embedding,
+        duration_ms=elapsed_ms(start_time),
+    )
 
     async with async_session() as session:
         rpc_result = await session.execute(

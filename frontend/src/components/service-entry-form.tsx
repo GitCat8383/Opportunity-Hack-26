@@ -1,11 +1,13 @@
 "use client";
 
-import { FormEvent, useRef, useState } from "react";
+import { FormEvent, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { apiFetch, ApiError } from "@/lib/api";
+import { useAiTranslations } from "@/hooks/use-ai-translations";
 import { createClient } from "@/lib/supabase/client";
 import type { StructuredNoteResult, TranscriptionResult } from "@/types";
+import { AiStatusToast } from "./ai-status-toast";
 
 type ServiceEntryFormProps = {
   clientId: string;
@@ -56,6 +58,7 @@ export function ServiceEntryForm({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const [displayLanguage, setDisplayLanguage] = useState<"en" | "es">("en");
   const [serviceDate, setServiceDate] = useState(buildTodayValue);
   const [serviceType, setServiceType] = useState(serviceTypes[0] ?? "");
   const [language, setLanguage] = useState("en");
@@ -70,6 +73,69 @@ export function ServiceEntryForm({
   const [error, setError] = useState<string | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiProgress, setAiProgress] = useState<AiProgressState>("idle");
+  const [toast, setToast] = useState<{
+    tone: "loading" | "success" | "error";
+    message: string | null;
+  }>({ tone: "loading", message: null });
+  const translationTexts = useMemo(
+    () => [
+      "Log Service",
+      "Switch the form language without changing the saved language of the note itself.",
+      "English",
+      "Spanish",
+      "Voice Note Assistant",
+      "Record, transcribe, and structure a service note with Gemini.",
+      "Stop Recording",
+      "Record Voice Note",
+      "Recording",
+      "Transcribing",
+      "Structuring",
+      "Service Date",
+      "Service Type",
+      "Staff",
+      "Language",
+      "Notes",
+      "Enter the service details and case notes.",
+      "AI Structured Draft",
+      "Review the structured note fields before saving.",
+      "Summary",
+      "Action Items",
+      "Follow-up date:",
+      "None detected",
+      "Risk flag:",
+      "Yes",
+      "No",
+      "Save Service Entry",
+      "Saving...",
+      "Recording voice note...",
+      "Transcribing the voice note...",
+      "Structuring the voice note...",
+      "Voice note was structured into a draft.",
+      "Unable to process the voice note.",
+      ...serviceTypes,
+    ],
+    [serviceTypes]
+  );
+  const { t, loading: translatingUi } = useAiTranslations({
+    texts: translationTexts,
+    targetLanguage: displayLanguage,
+    enabled: displayLanguage === "es",
+  });
+
+  function showToast(
+    tone: "loading" | "success" | "error",
+    message: string | null,
+    dismissAfterMs?: number
+  ) {
+    setToast({ tone, message });
+    if (dismissAfterMs) {
+      window.setTimeout(() => {
+        setToast((current) =>
+          current.message === message ? { ...current, message: null } : current
+        );
+      }, dismissAfterMs);
+    }
+  }
 
   async function getAccessToken() {
     const {
@@ -86,6 +152,7 @@ export function ServiceEntryForm({
 
   async function handleStructuredTranscript(transcript: string, accessToken: string) {
     setAiProgress("structuring");
+    showToast("loading", "Structuring the voice note...");
 
     const structured = await apiFetch<StructuredNoteResult>(
       "/ai/structure-note",
@@ -109,6 +176,7 @@ export function ServiceEntryForm({
       followUpDate: structured.follow_up_date ?? "",
       riskFlag: structured.risk_flag,
     });
+    showToast("success", "Voice note was structured into a draft.", 2500);
   }
 
   async function transcribeBlob(audioBlob: Blob) {
@@ -122,6 +190,7 @@ export function ServiceEntryForm({
       }
 
       setAiProgress("transcribing");
+      showToast("loading", "Transcribing the voice note...");
 
       const formData = new FormData();
       formData.append(
@@ -150,11 +219,12 @@ export function ServiceEntryForm({
       setAiProgress("idle");
     } catch (err) {
       setAiProgress("idle");
-      setAiError(
+      const message =
         err instanceof ApiError
           ? err.message
-          : "Unable to process the voice note."
-      );
+          : "Unable to process the voice note.";
+      setAiError(message);
+      showToast("error", message, 3500);
     }
   }
 
@@ -181,6 +251,7 @@ export function ServiceEntryForm({
 
     setAiError(null);
     setAiProgress("recording");
+    showToast("loading", "Recording voice note...");
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -211,9 +282,10 @@ export function ServiceEntryForm({
       recorder.start();
     } catch (err) {
       setAiProgress("idle");
-      setAiError(
-        err instanceof Error ? err.message : "Unable to start recording."
-      );
+      const message =
+        err instanceof Error ? err.message : "Unable to start recording.";
+      setAiError(message);
+      showToast("error", message, 3500);
     }
   }
 
@@ -270,13 +342,43 @@ export function ServiceEntryForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="rounded-lg border bg-card p-4 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-semibold">{t("Log Service")}</h2>
+            <p className="text-sm text-muted-foreground">
+              {t(
+                "Switch the form language without changing the saved language of the note itself."
+              )}
+            </p>
+          </div>
+          <div className="inline-flex rounded-md border bg-background p-1">
+            {(["en", "es"] as const).map((lang) => (
+              <button
+                key={lang}
+                type="button"
+                onClick={() => setDisplayLanguage(lang)}
+                className={`rounded px-3 py-1.5 text-sm transition ${
+                  displayLanguage === lang ? "bg-primary text-primary-foreground" : ""
+                }`}
+              >
+                {lang === "en" ? t("English") : t("Spanish")}
+              </button>
+            ))}
+          </div>
+        </div>
+        {translatingUi ? (
+          <p className="text-xs text-muted-foreground">Translating form...</p>
+        ) : null}
+      </div>
+
       {canUseAi ? (
         <div className="rounded-lg border bg-card p-4 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="font-semibold">Voice Note Assistant</h2>
+              <h2 className="font-semibold">{t("Voice Note Assistant")}</h2>
               <p className="text-sm text-muted-foreground">
-                Record, transcribe, and structure a service note with Gemini.
+                {t("Record, transcribe, and structure a service note with Gemini.")}
               </p>
             </div>
             <button
@@ -285,19 +387,21 @@ export function ServiceEntryForm({
               disabled={aiProgress === "transcribing" || aiProgress === "structuring"}
               className="rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent disabled:opacity-50 transition"
             >
-              {aiProgress === "recording" ? "Stop Recording" : "Record Voice Note"}
+              {aiProgress === "recording"
+                ? t("Stop Recording")
+                : t("Record Voice Note")}
             </button>
           </div>
 
           <div className="grid gap-3 md:grid-cols-3">
             <div className={`rounded-md border px-3 py-2 text-sm ${progressClasses(aiProgress, "recording")}`}>
-              Recording
+              {t("Recording")}
             </div>
             <div className={`rounded-md border px-3 py-2 text-sm ${progressClasses(aiProgress, "transcribing")}`}>
-              Transcribing
+              {t("Transcribing")}
             </div>
             <div className={`rounded-md border px-3 py-2 text-sm ${progressClasses(aiProgress, "structuring")}`}>
-              Structuring
+              {t("Structuring")}
             </div>
           </div>
 
@@ -317,7 +421,7 @@ export function ServiceEntryForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-1">
-          <span className="text-sm font-medium">Service Date</span>
+          <span className="text-sm font-medium">{t("Service Date")}</span>
           <input
             name="service_date"
             type="date"
@@ -329,7 +433,7 @@ export function ServiceEntryForm({
         </label>
 
         <label className="space-y-1">
-          <span className="text-sm font-medium">Service Type</span>
+          <span className="text-sm font-medium">{t("Service Type")}</span>
           <select
             name="service_type"
             required
@@ -339,14 +443,14 @@ export function ServiceEntryForm({
           >
             {serviceTypes.map((item) => (
               <option key={item} value={item}>
-                {item}
+                {t(item)}
               </option>
             ))}
           </select>
         </label>
 
         <label className="space-y-1">
-          <span className="text-sm font-medium">Staff</span>
+          <span className="text-sm font-medium">{t("Staff")}</span>
           <input
             value={staffName}
             disabled
@@ -355,27 +459,27 @@ export function ServiceEntryForm({
         </label>
 
         <label className="space-y-1">
-          <span className="text-sm font-medium">Language</span>
+          <span className="text-sm font-medium">{t("Language")}</span>
           <select
             name="language"
             value={language}
             onChange={(event) => setLanguage(event.target.value)}
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
-            <option value="en">English</option>
-            <option value="es">Spanish</option>
+            <option value="en">{t("English")}</option>
+            <option value="es">{t("Spanish")}</option>
           </select>
         </label>
       </div>
 
       <label className="block space-y-1">
-        <span className="text-sm font-medium">Notes</span>
+        <span className="text-sm font-medium">{t("Notes")}</span>
         <textarea
           name="notes"
           rows={8}
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
-          placeholder="Enter the service details and case notes."
+          placeholder={t("Enter the service details and case notes.")}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
       </label>
@@ -383,15 +487,15 @@ export function ServiceEntryForm({
       {canUseAi && (structuredFields.summary || structuredFields.actionItems.length > 0 || structuredFields.followUpDate || structuredFields.riskFlag) ? (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-4 space-y-3">
           <div>
-            <h2 className="font-semibold text-emerald-900">AI Structured Draft</h2>
+            <h2 className="font-semibold text-emerald-900">{t("AI Structured Draft")}</h2>
             <p className="text-sm text-emerald-800">
-              Review the structured note fields before saving.
+              {t("Review the structured note fields before saving.")}
             </p>
           </div>
 
           {structuredFields.summary ? (
             <div>
-              <p className="text-sm font-medium text-emerald-900">Summary</p>
+              <p className="text-sm font-medium text-emerald-900">{t("Summary")}</p>
               <p className="mt-1 text-sm text-emerald-900">
                 {structuredFields.summary}
               </p>
@@ -400,7 +504,7 @@ export function ServiceEntryForm({
 
           {structuredFields.actionItems.length > 0 ? (
             <div>
-              <p className="text-sm font-medium text-emerald-900">Action Items</p>
+              <p className="text-sm font-medium text-emerald-900">{t("Action Items")}</p>
               <ul className="mt-1 list-disc pl-5 text-sm text-emerald-900">
                 {structuredFields.actionItems.map((item) => (
                   <li key={item}>{item}</li>
@@ -411,10 +515,10 @@ export function ServiceEntryForm({
 
           <div className="grid gap-3 md:grid-cols-2">
             <div className="rounded-md border border-emerald-200 bg-white px-3 py-2 text-sm">
-              Follow-up date: {structuredFields.followUpDate || "None detected"}
+              {t("Follow-up date:")} {structuredFields.followUpDate || t("None detected")}
             </div>
             <div className="rounded-md border border-emerald-200 bg-white px-3 py-2 text-sm">
-              Risk flag: {structuredFields.riskFlag ? "Yes" : "No"}
+              {t("Risk flag:")} {structuredFields.riskFlag ? t("Yes") : t("No")}
             </div>
           </div>
         </div>
@@ -426,9 +530,11 @@ export function ServiceEntryForm({
           disabled={loading}
           className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition"
         >
-          {loading ? "Saving..." : "Save Service Entry"}
+          {loading ? t("Saving...") : t("Save Service Entry")}
         </button>
       </div>
+
+      <AiStatusToast message={toast.message} tone={toast.tone} />
     </form>
   );
 }

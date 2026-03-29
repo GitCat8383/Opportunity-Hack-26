@@ -40,7 +40,7 @@ async def list_appointments(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     query = select(Appointment).where(Appointment.org_id == org_id)
 
     if client_id:
@@ -74,7 +74,7 @@ async def create_appointment(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_role(["staff", "admin"])),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     client_result = await db.execute(
         select(Client.id).where(Client.id == data.client_id, Client.org_id == org_id)
     )
@@ -102,7 +102,7 @@ async def get_appointment(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     result = await db.execute(
         select(Appointment).where(
             Appointment.id == appointment_id,
@@ -122,7 +122,7 @@ async def update_appointment(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_role(["staff", "admin"])),
 ):
-    org_id = current_user.get("user_metadata", {}).get("org_id")
+    org_id = current_user["org_id"]
     result = await db.execute(
         select(Appointment).where(
             Appointment.id == appointment_id,

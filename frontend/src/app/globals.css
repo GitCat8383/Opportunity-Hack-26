@@ -53,3 +53,19 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  .app-sidebar,
+  .print-hidden {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  main {
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+}
