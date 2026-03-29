@@ -1,12 +1,21 @@
 import { startOfMonth, startOfWeek } from "date-fns";
 
 import { AdminReportPanel } from "@/components/admin-report-panel";
+import { AccessDeniedToast } from "@/components/access-denied-toast";
 import { PendingFollowupsWidget } from "@/components/pending-followups-widget";
 import { requireAuthenticatedProfile } from "@/lib/auth";
 import type { FollowUp } from "@/types";
 
-export default async function DashboardPage() {
+type DashboardPageProps = {
+  searchParams?: Promise<{
+    access_denied?: string;
+  }>;
+};
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const { profile, supabase } = await requireAuthenticatedProfile();
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const showAccessDenied = resolvedSearchParams?.access_denied === "1";
 
   const canUseAi = profile.role === "staff" || profile.role === "admin";
   const isAdmin = profile.role === "admin";
@@ -87,6 +96,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {showAccessDenied ? <AccessDeniedToast /> : null}
       <h1 className="text-2xl font-bold">Dashboard</h1>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">

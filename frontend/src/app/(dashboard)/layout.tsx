@@ -1,6 +1,8 @@
 import { requireAuthenticatedProfile } from "@/lib/auth";
 import Link from "next/link";
 
+import { LogoutButton } from "@/components/logout-button";
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -43,6 +45,7 @@ export default async function DashboardLayout({
             </Link>
           ))}
         </nav>
+        <LogoutButton />
       </aside>
 
       <main className="flex-1 p-6 overflow-auto">{children}</main>

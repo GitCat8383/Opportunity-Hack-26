@@ -49,32 +49,32 @@ Expected scope:
 
 Checklist:
 
-- [ ] Log in as `aisha@sunrise-demo.org`
-- [ ] Confirm redirect to `/dashboard`
-- [ ] Open `/clients`
-- [ ] Open `/clients/new`
+- [x] Log in as `aisha@sunrise-demo.org`
+- [x] Confirm redirect to `/dashboard`
+- [x] Open `/clients`
+- [x] Open `/clients/new`
 - [ ] Create a client with:
   - First name: `Test`
   - Last name: `Volunteer`
   - DOB: `1995-05-10`
   - Phone: `555-111-2222`
   - Email: `volunteer-test@example.com`
-- [ ] Confirm save succeeds
-- [ ] Confirm the new client appears in `/clients`
-- [ ] Open the new client profile
-- [ ] Confirm demographics render correctly
-- [ ] Click `+ Log Service`
-- [ ] Create a service entry with:
+- [x] Confirm save succeeds
+- [x] Confirm the new client appears in `/clients`
+- [x] Open the new client profile
+- [x] Confirm demographics render correctly
+- [x] Click `+ Log Service`
+- [x] Create a service entry with:
   - Date: today
   - Service type: `Food Assistance`
   - Notes: `Client received pantry support and requested next-week follow-up.`
-- [ ] Confirm the service entry saves
-- [ ] Confirm the new entry appears on the client profile in reverse chronological order
-- [ ] Try opening `/audit-log`
-- [ ] Confirm access is denied or redirected
-- [ ] Try opening admin config pages such as `/clients/config`
-- [ ] Confirm access is denied or redirected
-- [ ] Confirm admin-only actions like CSV import/export are not exposed
+- [x] Confirm the service entry saves
+- [x] Confirm the new entry appears on the client profile in reverse chronological order
+- [x] Try opening `/audit-log`
+- [x] Confirm access is denied or redirected
+- [x] Try opening admin config pages such as `/clients/config`
+- [x] Confirm access is denied or redirected
+- [x] Confirm admin-only actions like CSV import/export are not exposed
 
 ## Staff Test
 
@@ -86,32 +86,32 @@ Expected scope:
 
 Checklist:
 
-- [ ] Log in as `james@sunrise-demo.org`
-- [ ] Confirm redirect to `/dashboard`
-- [ ] Open `/clients`
-- [ ] Search by an existing seeded client name
-- [ ] Confirm matching client results appear
-- [ ] Create a new client
-- [ ] Confirm the client profile loads after save
-- [ ] Log a manual service entry
-- [ ] Confirm it appears in the client profile history
-- [ ] Test voice-note flow on the service entry page
-- [ ] Confirm recording starts
-- [ ] Confirm transcription returns text
-- [ ] Confirm structured note fields are prefilled
-- [ ] Test photo intake on the client registration form
-- [ ] Confirm uploaded image pre-fills client fields
+- [x]Log in as `james@sunrise-demo.org`
+- [x] Confirm redirect to `/dashboard`
+- [x] Open `/clients`
+- [x] Search by an existing seeded client name
+- [x] Confirm matching client results appear
+- [x] Create a new client
+- [x] Confirm the client profile loads after save
+- [x] Log a manual service entry
+- [x] Confirm it appears in the client profile history
+- [x] Test voice-note flow on the service entry page
+- [x] Confirm recording starts
+- [x] Confirm transcription returns text
+- [x] Confirm structured note fields are prefilled
+- [x] Test photo intake on the client registration form
+- [x] Confirm uploaded image pre-fills client fields
 - [ ] Test semantic search from `/clients`
 - [ ] Confirm relevant results are returned for a natural-language query
-- [ ] Test `Generate Summary` on a client profile
-- [ ] Confirm summary appears as an editable draft
-- [ ] Open `/reports`
-- [ ] Confirm charts render
-- [ ] Confirm `Print Report` opens a printable layout
-- [ ] Try opening `/audit-log`
-- [ ] Confirm access is denied or redirected
-- [ ] Try opening `/clients/config`
-- [ ] Confirm access is denied or redirected
+- [x] Test `Generate Summary` on a client profile
+- [x] Confirm summary appears as an editable draft
+- [x] Open `/reports`
+- [x] Confirm charts render
+- [x] Confirm `Print Report` opens a printable layout
+- [x] Try opening `/audit-log`
+- [x] Confirm access is denied or redirected
+- [x] Try opening `/clients/config`
+- [x] Confirm access is denied or redirected
 
 ## Admin Test
 
@@ -122,29 +122,29 @@ Expected scope:
 
 Checklist:
 
-- [ ] Log in as `maria@sunrise-demo.org`
-- [ ] Confirm redirect to `/dashboard`
-- [ ] Confirm admin navigation items are visible
-- [ ] Open `/clients/config`
+- [x] Log in as `maria@sunrise-demo.org`
+- [x] Confirm redirect to `/dashboard`
+- [x] Confirm admin navigation items are visible
+- [x] Open `/clients/config`
 - [ ] Add a custom field
 - [ ] Confirm the new field appears on the client registration form
-- [ ] Open `/clients`
-- [ ] Test CSV export
-- [ ] Confirm CSV downloads successfully
-- [ ] Test CSV import with a small sample file
-- [ ] Confirm valid rows import successfully
-- [ ] Confirm invalid rows show validation errors inline
-- [ ] Open `/audit-log`
-- [ ] Confirm create/update/delete events appear
-- [ ] Open `/dashboard`
-- [ ] Generate a funder report
-- [ ] Confirm the report streams into the UI
-- [ ] Export the generated report to DOCX
-- [ ] Confirm the DOCX downloads and opens
-- [ ] Open `/reports`
-- [ ] Confirm charts render correctly
-- [ ] Click `Print Report`
-- [ ] Confirm print layout hides app navigation and looks PDF-ready
+- [x]] Open `/clients`
+- [x] Test CSV export
+- [x] Confirm CSV downloads successfully
+- [x] Test CSV import with a small sample file
+- [x] Confirm valid rows import successfully
+- [x] Confirm invalid rows show validation errors inline
+- [x] Open `/audit-log`
+- [x] Confirm create/update/delete events appear
+- [x] Open `/dashboard`
+- [x] Generate a funder report
+- [x] Confirm the report streams into the UI
+- [x] Export the generated report to DOCX
+- [x] Confirm the DOCX downloads and opens
+- [x] Open `/reports`
+- [x] Confirm charts render correctly
+- [x] Click `Print Report`
+- [x] Confirm print layout hides app navigation and looks PDF-ready
 - [ ] Check AI budget settings in org config
 - [ ] Confirm admin can view and update the monthly AI budget
 

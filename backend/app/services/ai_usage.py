@@ -35,6 +35,13 @@ class AIUsageContext:
 
 
 MODEL_PRICING_USD_PER_MILLION: dict[str, dict[str, Decimal]] = {
+    "gemini-3.1-flash-lite-preview": {
+        "TEXT": Decimal("0.25"),
+        "IMAGE": Decimal("0.25"),
+        "VIDEO": Decimal("0.25"),
+        "OUTPUT_TEXT": Decimal("1.50"),
+        "AUDIO": Decimal("0.50"),
+    },
     "gemini-2.5-pro": {
         "TEXT": Decimal("1.25"),
         "IMAGE": Decimal("1.25"),

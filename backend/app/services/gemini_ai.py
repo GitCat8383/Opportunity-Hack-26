@@ -1,8 +1,8 @@
-from google import genai
-from google.genai import types
 import hashlib
 import json
 from time import perf_counter
+from google import genai
+from google.genai import types
 
 from app.core.config import get_settings
 from app.schemas.ai import (
@@ -85,7 +85,6 @@ Configured custom fields:
         ],
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
-            response_schema=PhotoIntakeResponse,
         ),
     )
 
@@ -94,7 +93,12 @@ Configured custom fields:
     elif response.parsed is not None:
         parsed = PhotoIntakeResponse.model_validate(response.parsed)
     else:
-        parsed = PhotoIntakeResponse.model_validate_json(response.text)
+        response_text = (response.text or "").strip()
+        if response_text.startswith("```"):
+            response_text = response_text.strip("`")
+            if response_text.lower().startswith("json"):
+                response_text = response_text[4:].strip()
+        parsed = PhotoIntakeResponse.model_validate(json.loads(response_text))
 
     await record_generative_ai_usage(
         context=usage_context,

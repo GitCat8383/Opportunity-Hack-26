@@ -497,7 +497,7 @@ async def translate_text(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_role(["volunteer", "staff", "admin"])),
 ):
-    """Translate text with caching. Model: Gemini 2.5 Flash (Step 10)"""
+    """Translate text with caching. Model: Gemini 3.1 Flash-Lite Preview (Step 10)"""
     normalized_source = data.source_lang.lower()
     normalized_target = data.target_lang.lower()
 

@@ -116,3 +116,14 @@ Step 12: Polish & Launch
 [ ] Fix bugs found during integration
 [ ] Double-check all env vars set in production deployments
 [ ] Update README with final setup instructions, architecture diagram, and screenshots
+Step 13: Requirements Closure
+[ ] Deploy frontend to a public URL and verify login + core CRUD flows work outside localhost
+[ ] Deploy backend to a public URL and verify all protected API routes work in production
+[ ] Finalize README deployment section so another person can set up and deploy the project without extra guidance
+[ ] Verify Google SSO works in the deployed environment, not just local email/password login
+[ ] Add configurable custom fields to the service log flow, not just the client intake/profile flow
+[ ] Add CSV export for service logs so admin can export both clients and service entries
+[ ] Decide whether to keep the extra `volunteer` role:
+[ ] If keeping it, update README/SRD-facing docs to clarify the app exceeds the original Admin/Staff requirement
+[ ] If not keeping it, align permissions and docs back to the original two-role requirement
+[ ] Run final requirements acceptance test against the SRD P0 + chosen P1 features and document pass/fail results

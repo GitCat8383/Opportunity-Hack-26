@@ -17,7 +17,7 @@ from app.services.ai_usage import (
 
 settings = get_settings()
 _client = genai.Client(api_key=settings.gemini_api_key)
-TRANSLATE_MODEL = "gemini-2.5-flash"
+TRANSLATE_MODEL = "gemini-3.1-flash-lite-preview"
 
 
 async def translate_texts_with_cache(

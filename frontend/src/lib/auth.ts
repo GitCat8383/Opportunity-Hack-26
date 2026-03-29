@@ -34,7 +34,7 @@ export async function requireAuthenticatedProfile(allowedRoles?: AllowedRole[]) 
   const profile: UserProfile = profileData;
 
   if (allowedRoles && !allowedRoles.includes(profile.role)) {
-    redirect("/dashboard");
+    redirect("/dashboard?access_denied=1");
   }
 
   return {
