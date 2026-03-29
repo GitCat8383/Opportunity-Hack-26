@@ -42,6 +42,8 @@ Step 2: 🔄 IN PROGRESS
 [x] Create prompts table with version history (prompt registry for AI system prompts)
 [x] Create organizations table and ensure all data tables include org_id for multi-tenant isolation
 [x] Verify RLS policies enforce org-level data isolation across all tables
+Reminder for later:
+- P0 is only fully complete after local testing passes and both frontend/backend are deployed to a public URL with deploy instructions confirmed in README.
 Step 3:
 [x] Client list page with search by name
 [x] Client registration form (name, DOB, phone, email + extra_fields JSONB)
