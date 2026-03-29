@@ -36,6 +36,7 @@ Before running this plan:
 - [ ] `client-documents` bucket exists in Supabase Storage
 - [ ] Backend env vars are valid
 - [ ] Frontend env vars are valid
+- [ ] SMTP / Gmail reminder env vars are configured if testing appointment notifications
 - [ ] Google SSO is configured in Supabase if you want to test Google login
 - [ ] Render backend is live
 - [ ] Vercel frontend is live
@@ -170,6 +171,36 @@ Run these if you want to confirm the implemented admin/reporting features.
 - [ ] Confirm it appears in the calendar/upcoming view
 - [ ] Refresh the page
 - [ ] Confirm it remains visible
+
+### P1-3B Appointment Reminder Email
+
+- [ ] Confirm reminder-email setup is complete:
+  - `SMTP_HOST`
+  - `SMTP_PORT`
+  - `SMTP_USERNAME`
+  - `SMTP_PASSWORD`
+  - `SMTP_FROM_EMAIL`
+  - `SMTP_FROM_NAME`
+  - `APPOINTMENT_REMINDER_WINDOW_DAYS`
+- [ ] Confirm `database/appointment_reminder_migration.sql` has been applied
+- [ ] Log in as `admin` or `staff`
+- [ ] Open a client profile whose email can receive mail
+- [ ] Create a `scheduled` appointment within the next 3 days
+- [ ] Confirm the appointment appears on `/calendar`
+- [ ] Trigger reminders using one of these methods:
+  - `POST /api/v1/appointments/send-reminders` as `admin`
+  - `python backend/send_appointment_reminders.py`
+- [ ] Confirm the client receives the email
+- [ ] Confirm the email includes:
+  - appointment date
+  - appointment time
+  - service type
+  - optional notes when present
+- [ ] Trigger reminders again without changing the appointment
+- [ ] Confirm a duplicate email is not sent for the same `scheduled_at`
+- [ ] Reschedule the appointment to a new time still within the reminder window
+- [ ] Trigger reminders again
+- [ ] Confirm a new reminder email is sent for the updated appointment time
 
 ### P1-4 Configurable Fields
 
