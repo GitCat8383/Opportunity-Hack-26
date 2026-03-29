@@ -57,9 +57,9 @@ Step 4:
 [x] Test semantic search with 5 natural language queries
 Step 5:
 [x] org_config table — store extra_fields JSON schema per org
-[ ] Admin panel to add/remove custom fields (renders dynamically on client form)
-[ ] CSV export — clients table → download via pandas or manual CSV build
-[ ] CSV import — upload CSV, parse, bulk insert with validation errors shown inline
+[x] Admin panel to add/remove custom fields (renders dynamically on client form)
+[x] CSV export — clients table → download via pandas or manual CSV build
+[x] CSV import — upload CSV, parse, bulk insert with validation errors shown inline
 Step 6: Scheduling, Calendar & Document Uploads
 [ ] Create appointments table (client_id, staff_id, scheduled_date, type, status, notes)
 [ ] Appointment creation form (date/time picker, client selector, service type)

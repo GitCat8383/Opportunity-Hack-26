@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { ApiError, apiFetch } from "@/lib/api";
 import { requireAuthenticatedProfile } from "@/lib/auth";
-import type { Client, ServiceEntryListResponse } from "@/types";
+import type { Client, OrgConfig, ServiceEntryListResponse } from "@/types";
 
 type ClientProfilePageProps = {
   params: {
@@ -34,14 +34,18 @@ export default async function ClientProfilePage({
   const { session } = await requireAuthenticatedProfile();
 
   try {
-    const [client, serviceEntries] = await Promise.all([
+    const [client, orgConfig, serviceEntries] = await Promise.all([
       apiFetch<Client>(`/clients/${params.id}`, { cache: "no-store" }, session.access_token),
+      apiFetch<OrgConfig>("/org-config", { cache: "no-store" }, session.access_token),
       apiFetch<ServiceEntryListResponse>(
         `/service-entries?client_id=${params.id}&per_page=100`,
         { cache: "no-store" },
         session.access_token
       ),
     ]);
+    const customFieldLabels = new Map(
+      orgConfig.extra_fields_schema.map((field) => [field.key, field.label])
+    );
 
     return (
       <div className="space-y-6">
@@ -87,7 +91,7 @@ export default async function ClientProfilePage({
                   {Object.entries(client.extra_fields).map(([key, value]) => (
                     <DetailRow
                       key={key}
-                      label={key}
+                      label={customFieldLabels.get(key) ?? key}
                       value={
                         value == null
                           ? null

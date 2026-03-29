@@ -1,8 +1,19 @@
 import { ClientForm } from "@/components/client-form";
+import { apiFetch } from "@/lib/api";
 import { requireAuthenticatedProfile } from "@/lib/auth";
+import type { OrgConfig } from "@/types";
 
 export default async function NewClientPage() {
-  await requireAuthenticatedProfile(["volunteer", "staff", "admin"]);
+  const { session } = await requireAuthenticatedProfile([
+    "volunteer",
+    "staff",
+    "admin",
+  ]);
+  const orgConfig = await apiFetch<OrgConfig>(
+    "/org-config",
+    { cache: "no-store" },
+    session.access_token
+  );
 
   return (
     <div className="space-y-6">
@@ -14,7 +25,7 @@ export default async function NewClientPage() {
       </div>
 
       <div className="rounded-lg border bg-card p-6">
-        <ClientForm />
+        <ClientForm extraFieldsSchema={orgConfig.extra_fields_schema} />
       </div>
     </div>
   );

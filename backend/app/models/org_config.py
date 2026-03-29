@@ -8,12 +8,26 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.models.client import Base
 
 
+DEFAULT_SERVICE_TYPES = [
+    "General",
+    "Food Assistance",
+    "Housing",
+    "Mental Health",
+    "Legal",
+    "Medical",
+    "Education",
+    "Other",
+]
+
+
 class OrgConfig(Base):
     __tablename__ = "org_config"
 
     org_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
     extra_fields_schema: Mapped[list] = mapped_column(JSONB, default=list)
-    service_types: Mapped[list] = mapped_column(JSONB, default=list)
+    service_types: Mapped[list] = mapped_column(
+        JSONB, default=lambda: DEFAULT_SERVICE_TYPES.copy()
+    )
     ai_features_enabled: Mapped[dict] = mapped_column(JSONB, default=dict)
     ai_monthly_budget_cents: Mapped[int] = mapped_column(Integer, default=5000)
     created_at: Mapped[datetime] = mapped_column(

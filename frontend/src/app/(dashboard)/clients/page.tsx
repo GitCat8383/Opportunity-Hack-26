@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ClientsAdminActions } from "@/components/clients-admin-actions";
 import { apiFetch } from "@/lib/api";
 import { requireAuthenticatedProfile } from "@/lib/auth";
 import type { ClientListResponse } from "@/types";
@@ -11,7 +12,7 @@ type ClientsPageProps = {
 };
 
 export default async function ClientsPage({ searchParams }: ClientsPageProps) {
-  const { session } = await requireAuthenticatedProfile();
+  const { profile, session } = await requireAuthenticatedProfile();
   const search = searchParams?.search?.trim() ?? "";
   const query = search ? `?search=${encodeURIComponent(search)}` : "";
   const data = await apiFetch<ClientListResponse>(
@@ -25,12 +26,6 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Clients</h1>
         <div className="flex gap-2">
-          <button className="rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent transition">
-            Import CSV
-          </button>
-          <button className="rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent transition">
-            Export CSV
-          </button>
           <Link
             href="/clients/new"
             className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
@@ -39,6 +34,8 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
           </Link>
         </div>
       </div>
+
+      {profile.role === "admin" ? <ClientsAdminActions /> : null}
 
       <form className="w-full max-w-sm">
         <input
