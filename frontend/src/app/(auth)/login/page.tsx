@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState } from "react";
+import { useFormState, useFormStatus } from "react-dom";
 
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -13,7 +14,7 @@ const initialLoginFormState: LoginFormState = {
 };
 
 export default function LoginPage() {
-  const [formState, formAction, isSubmitting] = useActionState(
+  const [formState, formAction] = useFormState(
     signInWithEmailPassword,
     initialLoginFormState
   );
@@ -80,13 +81,7 @@ export default function LoginPage() {
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             />
           </div>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full rounded-md bg-primary py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition"
-          >
-            {isSubmitting ? "Signing in..." : "Sign In with Email"}
-          </button>
+          <SubmitButton />
         </form>
 
         <div className="relative">
@@ -107,5 +102,19 @@ export default function LoginPage() {
         </button>
       </div>
     </main>
+  );
+}
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="w-full rounded-md bg-primary py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition"
+    >
+      {pending ? "Signing in..." : "Sign In with Email"}
+    </button>
   );
 }
