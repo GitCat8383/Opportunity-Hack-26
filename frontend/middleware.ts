@@ -1,15 +1,7 @@
-import { createServerClient } from "@supabase/ssr";
-import type { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
 import { NextResponse, type NextRequest } from "next/server";
 
 const PROTECTED_PREFIXES = ["/dashboard", "/clients", "/calendar", "/reports", "/audit-log"];
 const AUTH_ROUTES = new Set(["/login"]);
-const VALID_ROLES = new Set(["volunteer", "staff", "admin"]);
-type CookieToSet = {
-  name: string;
-  value: string;
-  options?: Partial<ResponseCookie>;
-};
 
 function isProtectedPath(pathname: string) {
   return PROTECTED_PREFIXES.some(
@@ -17,80 +9,30 @@ function isProtectedPath(pathname: string) {
   );
 }
 
-export async function middleware(request: NextRequest) {
+function hasSupabaseAuthCookie(request: NextRequest) {
+  return request.cookies
+    .getAll()
+    .some((cookie) => cookie.name.startsWith("sb-") && cookie.name.includes("auth-token"));
+}
+
+export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   if (!isProtectedPath(pathname) && !AUTH_ROUTES.has(pathname)) {
-    return NextResponse.next({
-      request,
-    });
+    return NextResponse.next();
   }
 
-  let response = NextResponse.next({
-    request,
-  });
+  const hasAuthCookie = hasSupabaseAuthCookie(request);
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet: CookieToSet[]) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            request.cookies.set(name, value)
-          );
-          response = NextResponse.next({
-            request,
-          });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  let user = null;
-  try {
-    const {
-      data: { user: resolvedUser },
-    } = await supabase.auth.getUser();
-    user = resolvedUser;
-  } catch {
-    if (AUTH_ROUTES.has(pathname)) {
-      return response;
-    }
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  if (AUTH_ROUTES.has(pathname) && user) {
+  if (AUTH_ROUTES.has(pathname) && hasAuthCookie) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  if (!isProtectedPath(pathname)) {
-    return response;
-  }
-
-  if (!user) {
+  if (isProtectedPath(pathname) && !hasAuthCookie) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const resolvedRole = profile?.role;
-
-  if (!resolvedRole || !VALID_ROLES.has(resolvedRole)) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {
