@@ -30,7 +30,8 @@ export function AppointmentForm({
     event.preventDefault();
     setLoading(true);
     setError(null);
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
 
     const {
       data: { session },
@@ -58,7 +59,7 @@ export function AppointmentForm({
         session.access_token
       );
 
-      event.currentTarget.reset();
+      form.reset();
       router.refresh();
     } catch (err) {
       setError(
