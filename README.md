@@ -131,6 +131,7 @@ Railway also works for the backend, but the instructions below use Render becaus
    - Runtime: `Python`
    - Build Command: `pip install -r requirements.txt`
    - Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - Python Version: `3.11` (or set `PYTHON_VERSION=3.11.11` in Render)
 5. Add environment variables:
 
 ```env
