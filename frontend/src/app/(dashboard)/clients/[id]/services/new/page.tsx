@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import { ServiceEntryForm } from "@/components/service-entry-form";
 import { ApiError, apiFetch } from "@/lib/api";
-import { requireAuthenticatedProfile } from "@/lib/auth";
+import { handleProtectedApiError, requireAuthenticatedProfile } from "@/lib/auth";
 import type { Client } from "@/types";
 
 type NewServiceEntryPageProps = {
@@ -70,8 +70,11 @@ export default async function NewServiceEntryPage({
       </div>
     );
   } catch (error) {
-    if (error instanceof ApiError && error.status === 404) {
-      notFound();
+    if (error instanceof ApiError) {
+      if (error.status === 404) {
+        notFound();
+      }
+      handleProtectedApiError(error);
     }
     throw error;
   }

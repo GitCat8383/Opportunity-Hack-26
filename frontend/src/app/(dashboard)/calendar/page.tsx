@@ -2,8 +2,8 @@ import { addDays } from "date-fns";
 
 import { AppointmentForm } from "@/components/appointment-form";
 import { CalendarOverview } from "@/components/calendar-overview";
-import { apiFetch } from "@/lib/api";
-import { requireAuthenticatedProfile } from "@/lib/auth";
+import { ApiError, apiFetch } from "@/lib/api";
+import { handleProtectedApiError, requireAuthenticatedProfile } from "@/lib/auth";
 import type {
   AppointmentListResponse,
   ClientListResponse,
@@ -37,23 +37,34 @@ export default async function CalendarPage({
   const dateTo = addDays(dateFrom, 6);
   dateTo.setHours(23, 59, 59, 999);
 
-  const [appointments, clients, orgConfig] = await Promise.all([
-    apiFetch<AppointmentListResponse>(
-      `/appointments?date_from=${encodeURIComponent(dateFrom.toISOString())}&date_to=${encodeURIComponent(dateTo.toISOString())}&per_page=200`,
-      { cache: "no-store" },
-      session.access_token
-    ),
-    apiFetch<ClientListResponse>(
-      "/clients?per_page=100",
-      { cache: "no-store" },
-      session.access_token
-    ),
-    apiFetch<OrgConfig>(
-      "/org-config",
-      { cache: "no-store" },
-      session.access_token
-    ),
-  ]);
+  let appointments: AppointmentListResponse;
+  let clients: ClientListResponse;
+  let orgConfig: OrgConfig;
+
+  try {
+    [appointments, clients, orgConfig] = await Promise.all([
+      apiFetch<AppointmentListResponse>(
+        `/appointments?date_from=${encodeURIComponent(dateFrom.toISOString())}&date_to=${encodeURIComponent(dateTo.toISOString())}&per_page=200`,
+        { cache: "no-store" },
+        session.access_token
+      ),
+      apiFetch<ClientListResponse>(
+        "/clients?per_page=100",
+        { cache: "no-store" },
+        session.access_token
+      ),
+      apiFetch<OrgConfig>(
+        "/org-config",
+        { cache: "no-store" },
+        session.access_token
+      ),
+    ]);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      handleProtectedApiError(error);
+    }
+    throw error;
+  }
 
   const serviceTypes =
     orgConfig.service_types.length > 0

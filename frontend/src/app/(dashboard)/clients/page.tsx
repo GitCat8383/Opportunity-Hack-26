@@ -2,8 +2,8 @@ import Link from "next/link";
 
 import { ClientsAdminActions } from "@/components/clients-admin-actions";
 import { SemanticSearchPanel } from "@/components/semantic-search-panel";
-import { apiFetch } from "@/lib/api";
-import { requireAuthenticatedProfile } from "@/lib/auth";
+import { ApiError, apiFetch } from "@/lib/api";
+import { handleProtectedApiError, requireAuthenticatedProfile } from "@/lib/auth";
 import type { ClientListResponse } from "@/types";
 
 type ClientsPageProps = {
@@ -17,11 +17,20 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
   const resolvedParams = await searchParams;
   const search = resolvedParams?.search?.trim() ?? "";
   const query = search ? `?search=${encodeURIComponent(search)}` : "";
-  const data = await apiFetch<ClientListResponse>(
-    `/clients${query}`,
-    { cache: "no-store" },
-    session.access_token
-  );
+  let data: ClientListResponse;
+
+  try {
+    data = await apiFetch<ClientListResponse>(
+      `/clients${query}`,
+      { cache: "no-store" },
+      session.access_token
+    );
+  } catch (error) {
+    if (error instanceof ApiError) {
+      handleProtectedApiError(error);
+    }
+    throw error;
+  }
 
   return (
     <div className="space-y-4">

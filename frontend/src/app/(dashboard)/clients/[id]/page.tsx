@@ -5,7 +5,7 @@ import { ClientDocumentsPanel } from "@/components/client-documents-panel";
 import { ServiceHistoryList } from "@/components/service-history-list";
 import { ClientSummaryPanel } from "@/components/client-summary-panel";
 import { ApiError, apiFetch } from "@/lib/api";
-import { requireAuthenticatedProfile } from "@/lib/auth";
+import { handleProtectedApiError, requireAuthenticatedProfile } from "@/lib/auth";
 import type {
   Client,
   ClientSummary,
@@ -171,8 +171,11 @@ export default async function ClientProfilePage({
       </div>
     );
   } catch (error) {
-    if (error instanceof ApiError && error.status === 404) {
-      notFound();
+    if (error instanceof ApiError) {
+      if (error.status === 404) {
+        notFound();
+      }
+      handleProtectedApiError(error);
     }
     throw error;
   }

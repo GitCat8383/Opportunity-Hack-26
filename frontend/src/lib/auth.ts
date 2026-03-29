@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { ApiError } from "@/lib/api";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { UserProfile } from "@/types";
 
@@ -43,4 +44,11 @@ export async function requireAuthenticatedProfile(allowedRoles?: AllowedRole[]) 
     user: userData.user,
     profile,
   };
+}
+
+export function handleProtectedApiError(error: unknown): never {
+  if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+    redirect("/login");
+  }
+  throw error;
 }

@@ -1,17 +1,26 @@
 import Link from "next/link";
 
 import { CustomFieldsManager } from "@/components/custom-fields-manager";
-import { apiFetch } from "@/lib/api";
-import { requireAuthenticatedProfile } from "@/lib/auth";
+import { ApiError, apiFetch } from "@/lib/api";
+import { handleProtectedApiError, requireAuthenticatedProfile } from "@/lib/auth";
 import type { OrgConfig } from "@/types";
 
 export default async function ClientConfigPage() {
   const { session } = await requireAuthenticatedProfile(["admin"]);
-  const orgConfig = await apiFetch<OrgConfig>(
-    "/org-config",
-    { cache: "no-store" },
-    session.access_token
-  );
+  let orgConfig: OrgConfig;
+
+  try {
+    orgConfig = await apiFetch<OrgConfig>(
+      "/org-config",
+      { cache: "no-store" },
+      session.access_token
+    );
+  } catch (error) {
+    if (error instanceof ApiError) {
+      handleProtectedApiError(error);
+    }
+    throw error;
+  }
 
   return (
     <div className="space-y-6">
